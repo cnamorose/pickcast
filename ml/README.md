@@ -21,4 +21,41 @@
 
 ## 개발 환경
 
-실행 방법과 세부 폴더 구조는 개발 환경 구성 후 추가합니다.
+- 확인된 환경: Windows, Python 3.14.0
+- 가상환경: venv
+- 패키지 버전: `ml/requirements.txt` 참고
+
+아래 명령은 모두 프로젝트 최상위 폴더에서 실행합니다.
+
+### 1. 가상환경 생성 및 패키지 설치
+
+Python 3.14가 설치된 환경에서 실행합니다.
+
+```powershell
+python -m venv ml/.venv
+.\ml\.venv\Scripts\python.exe -m pip install -r ml/requirements.txt
+```
+
+가상환경의 Python 경로를 직접 사용하므로 별도의 활성화는 필요하지 않습니다.
+
+### 2. 데이터 준비
+
+RetailRocket 데이터셋의 `events.csv`를 내려받아 다음 위치에 배치합니다.
+
+```text
+ml/data/raw/events.csv
+```
+
+이번 학습에는 `events.csv`만 사용합니다.
+원본 데이터와 가상환경 폴더는 Git에 커밋하지 않습니다.
+
+### 3. 데이터 점검
+
+```powershell
+.\ml\.venv\Scripts\python.exe ml/scripts/inspect_events.py
+```
+
+행·열 개수, 데이터 예시, 컬럼별 자료형, 이벤트 분포,
+결측치 및 완전히 동일한 중복 행 개수를 확인합니다.
+
+현재는 데이터 점검 단계이며, 전처리와 모델 학습 명령은 구현 후 추가합니다.
