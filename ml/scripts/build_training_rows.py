@@ -2,13 +2,13 @@ import csv
 from bisect import bisect_right
 from collections import Counter, defaultdict
 from pathlib import Path
-
+from tqdm import tqdm
 import pandas as pd
 
 
 SESSION_GAP_MS = 30 * 60 * 1000
 LABEL_WINDOW_MS = 30 * 60 * 1000
-SAMPLE_SESSIONS = 2_000
+SAMPLE_SESSIONS = None
 RANDOM_SEED = 42
 
 
@@ -31,12 +31,17 @@ def main():
         gaps.isna() | gaps.ge(SESSION_GAP_MS)
     ).cumsum()
 
-    # 구매 결과를 보지 않고 세션을 선택합니다.
+    # 구매 결과를 보지 않고 세션을 선택합니다. 
     all_sessions = views["session_id"].drop_duplicates()
-    selected = all_sessions.sample(
+
+    if SAMPLE_SESSIONS is None:
+        selected = all_sessions 
+    else:
+        selected = all_sessions.sample(
         n=min(SAMPLE_SESSIONS, len(all_sessions)),
         random_state=RANDOM_SEED,
     )
+
     sample_views = views.loc[views["session_id"].isin(selected)]
 
     # 구매 정보는 정답 생성과 동일 시각 구매 확인에만 사용합니다.
@@ -58,7 +63,11 @@ def main():
 
     output_dir = ml_dir / "data" / "processed"
     output_dir.mkdir(parents=True, exist_ok=True)
-    output_path = output_dir / "training_rows_sample.csv"
+    filename = (
+    "training_rows.csv"
+    if SAMPLE_SESSIONS is None
+    else "training_rows_sample.csv")
+    output_path = output_dir / filename
     temp_path = output_path.with_suffix(".csv.tmp")
 
     columns = [
@@ -79,7 +88,12 @@ def main():
         writer = csv.DictWriter(file, fieldnames=columns)
         writer.writeheader()
 
-        for session_id, session in sample_views.groupby("session_id"):
+        for session_id, session in tqdm(
+    sample_views.groupby("session_id"),
+    total=len(selected),
+    desc="학습 데이터 생성",
+    unit="session",
+):
             visitor = int(session["visitorid"].iloc[0])
             counts = Counter()
             first_view = {}
