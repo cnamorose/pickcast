@@ -14,7 +14,7 @@ RANDOM_SEED = 42
 
 
 def main():
-    ml_dir = Path(__file__).resolve().parents[1]
+    ml_dir = Path(__file__).resolve().parents[2]
     events = pd.read_csv(
         ml_dir / "data" / "raw" / "events.csv",
         usecols=["timestamp", "visitorid", "event", "itemid"],

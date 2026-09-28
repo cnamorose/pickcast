@@ -13,7 +13,7 @@ DAY_MS = 24 * 60 * 60 * 1000
 SAMPLE_SIZE = 100
 rng = random.Random(123)
 
-ml_dir = Path(__file__).resolve().parents[1]
+ml_dir = Path(__file__).resolve().parents[2]
 rows_path = ml_dir / "data" / "processed" / "product_purchase_v2" / "training_rows.csv"
 
 random_rows = []
