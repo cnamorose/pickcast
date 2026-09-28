@@ -22,9 +22,9 @@ def check(condition, message):
 
 
 def main():
-    ml_dir = Path(__file__).resolve().parents[1]
+    ml_dir = Path(__file__).resolve().parents[2]
     rows = pd.read_csv(
-        ml_dir / "data" / "processed" / "training_rows_sample.csv"
+        ml_dir / "data" / "processed" / "within_30m" / "training_rows_sample.csv"
     )
     raw = pd.read_csv(
         ml_dir / "data" / "raw" / "events.csv",
