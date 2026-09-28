@@ -13,7 +13,7 @@ RANDOM_SEED = 42
 
 
 def main():
-    ml_dir = Path(__file__).resolve().parents[1]
+    ml_dir = Path(__file__).resolve().parents[2]
     df = pd.read_csv(
         ml_dir / "data" / "raw" / "events.csv",
         usecols=["timestamp", "visitorid", "event", "itemid"],
@@ -61,7 +61,7 @@ def main():
     for timestamps in purchase_times.values():
         timestamps.sort()
 
-    output_dir = ml_dir / "data" / "processed"
+    output_dir = ml_dir / "data" / "processed" / "within_30m"
     output_dir.mkdir(parents=True, exist_ok=True)
     filename = (
     "training_rows.csv"

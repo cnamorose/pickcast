@@ -10,7 +10,7 @@ LABEL_WINDOW_MS = 30 * 60 * 1000
 
 
 def main():
-    ml_dir = Path(__file__).resolve().parents[1]
+    ml_dir = Path(__file__).resolve().parents[2]
 
     df = pd.read_csv(
         ml_dir / "data" / "raw" / "events.csv",
@@ -82,7 +82,7 @@ def main():
     features["label"] = features.index.isin(purchased_items).astype("int8")
     features = features.reset_index()
 
-    output_dir = ml_dir / "data" / "processed"
+    output_dir = ml_dir / "data" / "processed" / "within_30m"
     output_dir.mkdir(parents=True, exist_ok=True)
     output_path = output_dir / "sample_training_rows.csv"
     features.to_csv(output_path, index=False)

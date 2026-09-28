@@ -56,11 +56,11 @@ def load_data(path):
 
 
 def main():
-    ml_dir = Path(__file__).resolve().parents[1]
-    split_dir = ml_dir / "data" / "processed" / "splits"
+    ml_dir = Path(__file__).resolve().parents[2]
+    split_dir = ml_dir / "data" / "processed" / "within_30m" / "splits"
 
     # /ml/data/ 아래이므로 모델 파일은 Git에서 제외됩니다.
-    output_dir = ml_dir / "data" / "artifacts" / "baseline"
+    output_dir = ml_dir / "data" / "artifacts" / "within_30m"
     output_dir.mkdir(parents=True, exist_ok=True)
 
     print("학습 데이터를 읽습니다.", flush=True)

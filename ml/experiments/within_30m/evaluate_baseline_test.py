@@ -21,9 +21,9 @@ KEYS = ["session_id", "cutoff_timestamp"]
 
 
 def main():
-    ml_dir = Path(__file__).resolve().parents[1]
-    test_path = ml_dir / "data" / "processed" / "splits" / "test.csv"
-    artifact_dir = ml_dir / "data" / "artifacts" / "baseline"
+    ml_dir = Path(__file__).resolve().parents[2]
+    test_path = ml_dir / "data" / "processed" / "within_30m" / "splits" / "test.csv"
+    artifact_dir = ml_dir / "data" / "artifacts" / "within_30m"
 
     training_report = json.loads(
         (artifact_dir / "metrics.json").read_text(encoding="utf-8")
