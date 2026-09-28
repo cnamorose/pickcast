@@ -6,7 +6,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 
-ml_dir = Path(__file__).resolve().parents[1]
+ml_dir = Path(__file__).resolve().parents[2]
 source = ml_dir / "data" / "processed" / "product_purchase_v2" / "training_rows.csv"
 output_dir = source.parent / "splits"
 output_dir.mkdir(parents=True, exist_ok=True)

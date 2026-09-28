@@ -56,7 +56,7 @@ def load_data(path):
 
 
 def main():
-    ml_dir = Path(__file__).resolve().parents[1]
+    ml_dir = Path(__file__).resolve().parents[2]
     split_dir = ml_dir / "data" / "processed" / "product_purchase_v2" / "splits"
     output_dir = ml_dir / "data" / "artifacts" / "product_purchase_recent_day"
     output_dir.mkdir(parents=True, exist_ok=True)

@@ -15,7 +15,7 @@ from sklearn.metrics import (
 )
 
 
-ml_dir = Path(__file__).resolve().parents[1]
+ml_dir = Path(__file__).resolve().parents[2]
 model_dir = ml_dir / "data" / "artifacts" / "product_purchase_recent_day"
 test_path = (
     ml_dir / "data" / "processed" / "product_purchase_v2"
