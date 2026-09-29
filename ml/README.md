@@ -3,7 +3,7 @@
 RetailRocket의 조회 행동을 바탕으로 상품별 구매 예측 모델을 개발합니다.
 
 ## 현재 상태
-
+- [상품별 구매 예측 모델 v1 설계](../docs/ml/product-purchase-v1-spec.md)
 - [첫 번째 실험: 30분 내 구매 예측](../docs/ml/within-30m-results.md) — 코드는 `experiments/within_30m/`에 있습니다.
 - [두 번째 실험: 24시간 내 구매 예측](../docs/ml/within-24h-results.md) — 코드는 `experiments/within_24h/`에 있습니다.
 - 두 실험은 본 모델을 만들기 전에 진행한 실험입니다. 실험 성능을 본 모델의 성능으로 사용하지 않습니다.
