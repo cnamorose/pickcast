@@ -7,7 +7,8 @@ RetailRocket의 조회 행동을 바탕으로 상품별 구매 예측 모델을 
 - [첫 번째 실험: 30분 내 구매 예측](../docs/ml/within-30m-results.md) — 코드는 `experiments/within_30m/`에 있습니다.
 - [두 번째 실험: 24시간 내 구매 예측](../docs/ml/within-24h-results.md) — 코드는 `experiments/within_24h/`에 있습니다.
 - 두 실험은 초기에 구매 정답에 시간 제한이 필요하다고 판단해 진행한 실험입니다. 이후 본 모델은 시간 제한 없이 구매 여부를 정답으로 사용하기로 했으며, 실험 성능을 본 모델의 성능으로 사용하지 않습니다.
-- 본 모델의 학습 데이터와 모델은 아직 만들지 않았습니다.
+- [본 모델 학습 데이터 생성 결과](../docs/ml/product-purchase-training-data.md) — 코드는 `product_purchase/`에 있습니다.
+- 본 모델은 아직 학습하지 않았습니다.
 
 ## 본 모델의 목표
 
@@ -56,6 +57,7 @@ ml/data/
   raw/events.csv                  원본 데이터
   experiments/within_30m/         30분 실험의 processed(학습 데이터)·artifacts(모델, 지표)
   experiments/within_24h/         24시간 실험의 processed·artifacts
+  product_purchase/               본 모델의 사용자 분리, 학습 데이터, 생성 보고서
 ```
 
 본 모델의 데이터와 모델은 실험 결과와 섞이지 않도록 `ml/data/product_purchase/`에 보관합니다. 학습 데이터는 행 수가 많아 Parquet 형식으로 저장합니다.
@@ -67,3 +69,21 @@ ml/data/
 ```
 
 이 스크립트로 데이터 크기, 컬럼, 이벤트 분포, 결측치와 동일한 행의 개수를 확인합니다. 현재 `ml/scripts/`에는 데이터 점검 스크립트가 있으며, 시간 제한 실험 코드는 `ml/experiments/`에 보관합니다.
+
+### 4. 본 모델 학습 데이터 생성
+
+아래 순서로 실행합니다. 콘솔에서 한글이 깨지면 `$env:PYTHONIOENCODING = "utf-8"`을 먼저 설정합니다.
+
+```powershell
+.\ml\.venv\Scripts\python.exe ml/product_purchase/split_users.py
+.\ml\.venv\Scripts\python.exe ml/product_purchase/build_training_rows.py
+.\ml\.venv\Scripts\python.exe ml/product_purchase/validate_training_rows.py
+```
+
+| 스크립트 | 하는 일 | 결과 (`ml/data/product_purchase/`) |
+| --- | --- | --- |
+| `split_users.py` | 사용자 단위 train/valid/test 70/15/15 분리 | `users.parquet`, `split_report.json` |
+| `build_training_rows.py` | 조회 시점별·후보 상품별 피처와 정답 생성 | `training_rows/{train,valid,test}.parquet`, `build_report.json` |
+| `validate_training_rows.py` | 샘플 시점을 원본에서 다시 계산해 대조 | 콘솔 출력 |
+
+피처 계산은 `product_purchase/features.py`의 `UserViewState`에 있으며, 서비스 예측에서도 같은 클래스를 사용합니다. 전체 생성에는 약 2분이 걸립니다.
