@@ -9,7 +9,7 @@ RetailRocket의 조회 행동을 바탕으로 상품별 구매 예측 모델을 
 - 두 실험은 초기에 구매 정답에 시간 제한이 필요하다고 판단해 진행한 실험입니다. 이후 본 모델은 시간 제한 없이 구매 여부를 정답으로 사용하기로 했으며, 실험 성능을 본 모델의 성능으로 사용하지 않습니다.
 - [본 모델 학습 데이터 생성 결과](../docs/ml/product-purchase-training-data.md) — 코드는 `product_purchase/`에 있습니다.
 - [본 모델 학습·보정·평가 결과](../docs/ml/product-purchase-model-results.md) — v1 모델(LightGBM, 시점 가중치, isotonic_smooth 보정, 임계값 4.27%)을 확정하고 test를 평가했습니다.
-- 서비스에서 쓸 추론 모듈(`product_purchase/predict.py`)을 추가했습니다. 백엔드 연결은 아직 하지 않았습니다.
+- 서비스에서 쓸 추론 모듈(`product_purchase/predict.py`)을 추가했습니다. 백엔드 연결 방법은 [구매 예측 모델 연동 가이드](../docs/ml/product-purchase-inference-guide.md)에 정리했습니다.
 
 ## 본 모델의 목표
 
