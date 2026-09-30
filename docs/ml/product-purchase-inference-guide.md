@@ -21,16 +21,18 @@ timeline = predictor.timeline(views)             # 확률 변화 그래프용
 - `ml/product_purchase/`의 `predict.py`, `features.py`, `modeling.py`, `events.py`
 - 패키지: `numpy`, `pandas`, `lightgbm`, `scikit-learn`, `pyarrow` (버전은 `ml/requirements.txt`)
 
-### 모델 파일 (Git에 없음)
+### 모델 파일
 
-아래 두 파일이 필요하다. ML 담당에게 받거나, `ml/README.md` 4·5번 순서로 직접 생성한다(원본 데이터 필요, 약 15분).
+확정 모델은 Git에 포함되어 있어 저장소를 받으면 바로 사용할 수 있다. 원본 데이터나 학습 과정은 필요 없다.
 
-| 파일 | 내용 |
+| 파일 (`ml/models/product_purchase_v1/`) | 내용 |
 | --- | --- |
 | `calibration.json` | 사용할 모델 이름, 확률 보정 곡선, 구매 판정 임계값 |
 | `lgbm_point.txt` | LightGBM 모델 |
 
-기본 위치는 `ml/data/product_purchase/models/`이다. 다른 곳에 두려면 `PurchasePredictor(directory="경로")`로 지정한다.
+`PurchasePredictor()`는 기본으로 이 폴더를 읽는다. 다른 곳에 두려면 `PurchasePredictor(directory="경로")`로 지정한다. 모델이 바뀌면 `product_purchase_v2/`처럼 새 폴더로 추가되고 ML 담당이 알린다.
+
+모델은 RetailRocket 공개 데이터셋(CC BY-NC-SA 4.0)으로 학습했으므로 같은 조건을 따른다. 비영리 목적으로만 사용하고, 서비스 화면이나 발표 자료에 데이터 출처를 표시한다. 자세한 내용은 [모델 폴더 README](../../ml/models/product_purchase_v1/README.md)에 있다.
 
 ### 불러오기
 
@@ -224,4 +226,5 @@ def predict(request: PredictRequest):
 
 - [상품별 구매 예측 모델 v1 설계](product-purchase-v1-spec.md)
 - [학습·보정·평가 결과](product-purchase-model-results.md)
-- [ml/README](../../ml/README.md): 모델 파일 생성 방법
+- [ml/README](../../ml/README.md): 모델을 다시 학습하는 방법
+- [확정 모델 v1 설명](../../ml/models/product_purchase_v1/README.md)
