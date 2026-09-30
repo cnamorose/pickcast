@@ -58,7 +58,7 @@ ml/data/
   experiments/within_24h/         24시간 실험의 processed·artifacts
 ```
 
-본 모델의 데이터와 모델은 실험 결과와 섞이지 않도록 별도 폴더에 보관합니다.
+본 모델의 데이터와 모델은 실험 결과와 섞이지 않도록 `ml/data/product_purchase/`에 보관합니다. 학습 데이터는 행 수가 많아 Parquet 형식으로 저장합니다.
 
 ### 3. 데이터 점검
 
