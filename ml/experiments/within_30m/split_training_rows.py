@@ -14,8 +14,8 @@ def utc_text(timestamp):
 
 def main():
     ml_dir = Path(__file__).resolve().parents[2]
-    source = ml_dir / "data" / "processed" / "within_30m" / "training_rows.csv"
-    output_dir = ml_dir / "data" / "processed" / "within_30m" / "splits"
+    source = ml_dir / "data" / "experiments" / "within_30m" / "processed" / "training_rows.csv"
+    output_dir = ml_dir / "data" / "experiments" / "within_30m" / "processed" / "splits"
     output_dir.mkdir(parents=True, exist_ok=True)
 
     print("세션별 예측 시점과 구매 관찰 기간을 확인합니다.")

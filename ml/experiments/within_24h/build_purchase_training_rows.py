@@ -45,7 +45,7 @@ def main():
     )
     del events, purchases
 
-    output_dir = ml_dir / "data" / "processed" / "product_purchase_v2"
+    output_dir = ml_dir / "data" / "experiments" / "within_24h" / "processed"
     output_dir.mkdir(parents=True, exist_ok=True)
     output_path = output_dir / "training_rows.csv"
     temp_path = output_dir / "training_rows.csv.tmp"

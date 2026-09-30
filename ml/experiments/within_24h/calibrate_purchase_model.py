@@ -13,9 +13,9 @@ from sklearn.metrics import (
 
 
 ml_dir = Path(__file__).resolve().parents[2]
-model_dir = ml_dir / "data" / "artifacts" / "product_purchase_recent_day"
+model_dir = ml_dir / "data" / "experiments" / "within_24h" / "artifacts" / "recent_day"
 calibration_path = (
-    ml_dir / "data" / "processed" / "product_purchase_v2"
+    ml_dir / "data" / "experiments" / "within_24h" / "processed"
     / "splits" / "calibration.csv"
 )
 
