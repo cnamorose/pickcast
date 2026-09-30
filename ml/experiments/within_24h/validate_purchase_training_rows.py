@@ -14,7 +14,7 @@ SAMPLE_SIZE = 100
 rng = random.Random(123)
 
 ml_dir = Path(__file__).resolve().parents[2]
-rows_path = ml_dir / "data" / "processed" / "product_purchase_v2" / "training_rows.csv"
+rows_path = ml_dir / "data" / "experiments" / "within_24h" / "processed" / "training_rows.csv"
 
 random_rows = []
 positive_rows = []

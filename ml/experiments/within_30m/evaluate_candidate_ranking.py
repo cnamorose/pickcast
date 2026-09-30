@@ -17,8 +17,8 @@ KEYS = ["session_id", "cutoff_timestamp"]
 
 def main():
     ml_dir = Path(__file__).resolve().parents[2]
-    valid_path = ml_dir / "data" / "processed" / "within_30m" / "splits" / "valid.csv"
-    artifact_dir = ml_dir / "data" / "artifacts" / "within_30m"
+    valid_path = ml_dir / "data" / "experiments" / "within_30m" / "processed" / "splits" / "valid.csv"
+    artifact_dir = ml_dir / "data" / "experiments" / "within_30m" / "artifacts"
     model_path = artifact_dir / "model.txt"
 
     dtypes = {feature: "float32" for feature in FEATURES}

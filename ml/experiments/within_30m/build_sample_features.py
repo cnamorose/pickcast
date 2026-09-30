@@ -82,7 +82,7 @@ def main():
     features["label"] = features.index.isin(purchased_items).astype("int8")
     features = features.reset_index()
 
-    output_dir = ml_dir / "data" / "processed" / "within_30m"
+    output_dir = ml_dir / "data" / "experiments" / "within_30m" / "processed"
     output_dir.mkdir(parents=True, exist_ok=True)
     output_path = output_dir / "sample_training_rows.csv"
     features.to_csv(output_path, index=False)

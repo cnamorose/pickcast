@@ -57,8 +57,8 @@ def load_data(path):
 
 def main():
     ml_dir = Path(__file__).resolve().parents[2]
-    split_dir = ml_dir / "data" / "processed" / "product_purchase_v2" / "splits"
-    output_dir = ml_dir / "data" / "artifacts" / "product_purchase_recent_day"
+    split_dir = ml_dir / "data" / "experiments" / "within_24h" / "processed" / "splits"
+    output_dir = ml_dir / "data" / "experiments" / "within_24h" / "artifacts" / "recent_day"
     output_dir.mkdir(parents=True, exist_ok=True)
 
     print("학습 데이터를 읽습니다.", flush=True)

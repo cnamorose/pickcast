@@ -6,7 +6,7 @@ RetailRocket의 조회 행동을 바탕으로 상품별 구매 예측 모델을 
 - [상품별 구매 예측 모델 v1 설계](../docs/ml/product-purchase-v1-spec.md)
 - [첫 번째 실험: 30분 내 구매 예측](../docs/ml/within-30m-results.md) — 코드는 `experiments/within_30m/`에 있습니다.
 - [두 번째 실험: 24시간 내 구매 예측](../docs/ml/within-24h-results.md) — 코드는 `experiments/within_24h/`에 있습니다.
-- 두 실험은 본 모델을 만들기 전에 진행한 실험입니다. 실험 성능을 본 모델의 성능으로 사용하지 않습니다.
+- 두 실험은 초기에 구매 정답에 시간 제한이 필요하다고 판단해 진행한 실험입니다. 이후 본 모델은 시간 제한 없이 구매 여부를 정답으로 사용하기로 했으며, 실험 성능을 본 모델의 성능으로 사용하지 않습니다.
 - 본 모델의 학습 데이터와 모델은 아직 만들지 않았습니다.
 
 ## 본 모델의 목표
@@ -48,6 +48,17 @@ ml/data/raw/events.csv
 ```
 
 원본 데이터와 가상환경 폴더는 Git에 커밋하지 않습니다.
+
+스크립트가 만드는 데이터와 모델도 `ml/data/` 아래에 로컬로만 보관합니다.
+
+```text
+ml/data/
+  raw/events.csv                  원본 데이터
+  experiments/within_30m/         30분 실험의 processed(학습 데이터)·artifacts(모델, 지표)
+  experiments/within_24h/         24시간 실험의 processed·artifacts
+```
+
+본 모델의 데이터와 모델은 실험 결과와 섞이지 않도록 `ml/data/product_purchase/`에 보관합니다. 학습 데이터는 행 수가 많아 Parquet 형식으로 저장합니다.
 
 ### 3. 데이터 점검
 

@@ -61,7 +61,7 @@ def main():
     for timestamps in purchase_times.values():
         timestamps.sort()
 
-    output_dir = ml_dir / "data" / "processed" / "within_30m"
+    output_dir = ml_dir / "data" / "experiments" / "within_30m" / "processed"
     output_dir.mkdir(parents=True, exist_ok=True)
     filename = (
     "training_rows.csv"
