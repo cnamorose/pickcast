@@ -1,21 +1,18 @@
-"""predict.py의 출력 형식과 일관성을 확인한다. 로컬에 모델 파일이 없으면 건너뛴다."""
+"""predict.py의 출력 형식과 일관성을 확인한다. Git에 포함된 확정 모델을 사용한다."""
 import unittest
 
 import numpy as np
 
-from modeling import apply_calibration, models_dir
+from modeling import apply_calibration
+from predict import PurchasePredictor
 
 
 MINUTE = 60_000
-HAS_MODEL = (models_dir / "calibration.json").exists()
 
 
-@unittest.skipUnless(HAS_MODEL, "학습한 모델 파일이 없습니다.")
 class PurchasePredictorTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        from predict import PurchasePredictor
-
         cls.predictor = PurchasePredictor()
         cls.views = [
             (0, "A"),

@@ -9,7 +9,7 @@ RetailRocket의 조회 행동을 바탕으로 상품별 구매 예측 모델을 
 - 두 실험은 초기에 구매 정답에 시간 제한이 필요하다고 판단해 진행한 실험입니다. 이후 본 모델은 시간 제한 없이 구매 여부를 정답으로 사용하기로 했으며, 실험 성능을 본 모델의 성능으로 사용하지 않습니다.
 - [본 모델 학습 데이터 생성 결과](../docs/ml/product-purchase-training-data.md) — 코드는 `product_purchase/`에 있습니다.
 - [본 모델 학습·보정·평가 결과](../docs/ml/product-purchase-model-results.md) — v1 모델(LightGBM, 시점 가중치, isotonic_smooth 보정, 임계값 4.27%)을 확정하고 test를 평가했습니다.
-- 서비스에서 쓸 추론 모듈(`product_purchase/predict.py`)을 추가했습니다. 백엔드 연결은 아직 하지 않았습니다.
+- 서비스에서 쓸 추론 모듈(`product_purchase/predict.py`)을 추가했습니다. 백엔드 연결 방법은 [구매 예측 모델 연동 가이드](../docs/ml/product-purchase-inference-guide.md)에 정리했습니다.
 
 ## 본 모델의 목표
 
@@ -21,7 +21,8 @@ RetailRocket의 조회 행동을 바탕으로 상품별 구매 예측 모델을 
 
 - 예측 시점 이후의 정보가 모델 입력에 포함되지 않도록 합니다.
 - 학습과 실제 예측에서 같은 피처 계산 방식을 사용합니다.
-- 원본 데이터, 전처리 결과, 학습 모델 파일은 Git에 올리지 않습니다.
+- 원본 데이터, 전처리 결과, 실험·비교용 학습 모델은 Git에 올리지 않습니다.
+- 서비스에 쓰는 확정 모델만 `ml/models/`에 버전별 폴더로 커밋합니다. 학습 데이터(RetailRocket)의 라이선스(CC BY-NC-SA 4.0)를 따릅니다.
 - 데이터와 모델의 준비 방법 및 보관 위치를 문서에 기록합니다.
 
 ## 개발 환경
@@ -106,11 +107,13 @@ ml/data/
 | `calibrate_model.py` | 선택한 모델(`SELECTED_MODEL`)을 valid에서 보정하고 임계값 결정 | `calibration.json` |
 | `evaluate_test.py` | 확정한 모델·보정·임계값으로 test를 한 번 평가 | `test_metrics.json` |
 
-학습에는 약 11분, 보정과 test 평가에는 각각 1분 안팎이 걸립니다.
+학습에는 약 11분, 보정과 test 평가에는 각각 1분 안팎이 걸립니다. `evaluate_test.py`는 `test_metrics.json`이 이미 있으면 실행되지 않습니다. 공통 데이터 로드·가중치·평가 지표는 `product_purchase/modeling.py`에 있습니다.
+
+서비스에 쓸 모델로 확정하면 `calibration.json`과 그 안의 `model`에 적힌 모델 파일을 `ml/models/product_purchase_v1/`(다음 버전은 `v2/`)로 복사해 커밋합니다.
 
 ### 6. 조회 로그로 예측하기
 
-서비스 연결에는 `product_purchase/predict.py`의 `PurchasePredictor`를 사용합니다. `ml/data/product_purchase/models/`의 확정 모델(`calibration.json`에 적힌 모델, 보정, 임계값)을 읽습니다.
+서비스 연결에는 `product_purchase/predict.py`의 `PurchasePredictor`를 사용합니다. Git에 포함된 `ml/models/product_purchase_v1/`의 확정 모델(`calibration.json`과 그 안의 `model`에 적힌 모델 파일)을 읽으므로 원본 데이터나 학습 과정 없이 바로 사용할 수 있습니다.
 
 ```python
 from predict import PurchasePredictor
@@ -137,4 +140,4 @@ CSV(`timestamp`, `itemid` 컬럼)로 결과를 바로 확인할 수도 있습니
 .\ml\.venv\Scripts\python.exe -m unittest discover -s ml/product_purchase/tests -t ml/product_purchase -v
 ```
 
-`test_features.py`는 손으로 만든 조회 기록으로 피처 정의를 확인합니다. `test_predict.py`는 추론 결과의 형식과 일관성을 확인하며, 로컬에 모델 파일이 없으면 건너뜁니다. `evaluate_test.py`는 `test_metrics.json`이 이미 있으면 실행되지 않습니다. 공통 데이터 로드·가중치·평가 지표는 `product_purchase/modeling.py`에 있습니다.
+`test_features.py`는 손으로 만든 조회 기록으로 피처 정의를 확인합니다. `test_predict.py`는 Git에 포함된 확정 모델로 추론 결과의 형식과 일관성을 확인합니다.
