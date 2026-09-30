@@ -9,7 +9,7 @@ RetailRocket의 조회 행동을 바탕으로 상품별 구매 예측 모델을 
 - 두 실험은 초기에 구매 정답에 시간 제한이 필요하다고 판단해 진행한 실험입니다. 이후 본 모델은 시간 제한 없이 구매 여부를 정답으로 사용하기로 했으며, 실험 성능을 본 모델의 성능으로 사용하지 않습니다.
 - [본 모델 학습 데이터 생성 결과](../docs/ml/product-purchase-training-data.md) — 코드는 `product_purchase/`에 있습니다.
 - [본 모델 학습·보정·평가 결과](../docs/ml/product-purchase-model-results.md) — v1 모델(LightGBM, 시점 가중치, isotonic_smooth 보정, 임계값 4.27%)을 확정하고 test를 평가했습니다.
-- 서비스 연결은 아직 하지 않았습니다.
+- 서비스에서 쓸 추론 모듈(`product_purchase/predict.py`)을 추가했습니다. 백엔드 연결은 아직 하지 않았습니다.
 
 ## 본 모델의 목표
 
@@ -106,4 +106,35 @@ ml/data/
 | `calibrate_model.py` | 선택한 모델(`SELECTED_MODEL`)을 valid에서 보정하고 임계값 결정 | `calibration.json` |
 | `evaluate_test.py` | 확정한 모델·보정·임계값으로 test를 한 번 평가 | `test_metrics.json` |
 
-학습에는 약 11분, 보정과 test 평가에는 각각 1분 안팎이 걸립니다. `evaluate_test.py`는 `test_metrics.json`이 이미 있으면 실행되지 않습니다. 공통 데이터 로드·가중치·평가 지표는 `product_purchase/modeling.py`에 있습니다.
+학습에는 약 11분, 보정과 test 평가에는 각각 1분 안팎이 걸립니다.
+
+### 6. 조회 로그로 예측하기
+
+서비스 연결에는 `product_purchase/predict.py`의 `PurchasePredictor`를 사용합니다. `ml/data/product_purchase/models/`의 확정 모델(`calibration.json`에 적힌 모델, 보정, 임계값)을 읽습니다.
+
+```python
+from predict import PurchasePredictor
+
+predictor = PurchasePredictor()
+views = [("2026-09-30T10:00:00", "셔츠"), ("2026-09-30T10:01:30", "청바지"), ...]
+result = predictor.predict(views)     # 마지막 조회 시점의 후보별 확률·판정·순위·피처·SHAP 기여도
+timeline = predictor.timeline(views)  # 조회마다 후보별 확률
+```
+
+- 입력은 `(timestamp, itemid)` 조회 기록입니다. timestamp는 밀리초 숫자 또는 날짜·시각 문자열, itemid는 숫자나 문자열 모두 가능합니다.
+- 최종 선택·결제 정보는 입력에 넣지 않습니다. 이미 구매한 상품이 있으면 `purchases=[(timestamp, itemid)]`로 넘겨 후보에서 제외합니다.
+- SHAP 기여도는 보정 전 모델 점수(로그 오즈)에 대한 값입니다. 기여 방향은 확률에도 그대로 적용되지만 합이 보정 확률과 같지는 않습니다.
+
+CSV(`timestamp`, `itemid` 컬럼)로 결과를 바로 확인할 수도 있습니다.
+
+```powershell
+.\ml\.venv\Scripts\python.exe ml/product_purchase/predict.py log.csv
+```
+
+### 7. 테스트
+
+```powershell
+.\ml\.venv\Scripts\python.exe -m unittest discover -s ml/product_purchase/tests -t ml/product_purchase -v
+```
+
+`test_features.py`는 손으로 만든 조회 기록으로 피처 정의를 확인합니다. `test_predict.py`는 추론 결과의 형식과 일관성을 확인하며, 로컬에 모델 파일이 없으면 건너뜁니다. `evaluate_test.py`는 `test_metrics.json`이 이미 있으면 실행되지 않습니다. 공통 데이터 로드·가중치·평가 지표는 `product_purchase/modeling.py`에 있습니다.
