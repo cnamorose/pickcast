@@ -1,0 +1,2 @@
+# LightGBM은 CRLF 모델 파일을 읽지 못하므로 줄바꿈 변환을 막는다
+ml/models/** -text
