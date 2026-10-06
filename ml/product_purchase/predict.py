@@ -25,7 +25,7 @@ from modeling import apply_calibration
 
 
 # 서비스에 쓰는 확정 모델. 학습 결과(ml/data/product_purchase/models/)와 달리 Git으로 관리한다.
-RELEASE_DIR = ml_dir / "models" / "product_purchase_v1"
+RELEASE_DIR = Path(__file__).resolve().parents[1] / "models" / "product_purchase_v1"
 
 
 FEATURE_LABELS = {
@@ -55,9 +55,13 @@ class PurchasePredictor:
         self.calibration = json.loads(
             (directory / "calibration.json").read_text(encoding="utf-8")
         )
+        model_path = directory / f"{self.calibration['model']}.txt"
+        model_text = model_path.read_text(encoding="utf-8")
+
         self.model = lgb.Booster(
-            model_file=str(directory / f"{self.calibration['model']}.txt")
+        model_str=model_text
         )
+        
         self.threshold = self.calibration["threshold"]
 
     def _replay(self, views, purchases=()):
