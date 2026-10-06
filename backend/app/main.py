@@ -2,6 +2,7 @@ import sys
 from pathlib import Path
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 # ml/product_purchase 폴더를 Python import 경로에 추가
@@ -14,6 +15,14 @@ from predict import FEATURE_LABELS, PurchasePredictor
 
 
 app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # 서버가 시작될 때 ML 모델을 한 번만 로딩
 predictor = PurchasePredictor()
