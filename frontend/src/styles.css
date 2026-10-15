@@ -123,11 +123,7 @@ a {
   text-align: center;
   width: fit-content;
 }
-.pay-btn {
-  display: block;
-  width: 100%;
-  max-width: 337px;
-}
+
 .btn-black:disabled {
   opacity: 0.5;
   cursor: not-allowed;
@@ -195,12 +191,6 @@ a {
   margin: 24px 0;
 }
 
-.checkout-title {
-  font-size: 18px;
-  font-weight: 700;
-  margin-bottom: 4px;
-}
-
 .checkout-image {
   width: 120px;
   height: 120px;
@@ -220,6 +210,39 @@ a {
   display: flex;
   align-items: center;
   gap: 12px;
+}
+
+.rank-row-picked {
+  background: #f5f5f5;
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-weight: 700;
+}
+
+.rank-picked-label {
+  font-size: 12px;
+  color: #fff;
+  background: #000;
+  border-radius: 4px;
+  padding: 2px 6px;
+}
+
+.factor-group {
+  margin-bottom: 12px;
+}
+
+.factor-heading {
+  font-size: 14px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.factor-up {
+  color: #1a7f37;
+}
+
+.factor-down {
+  color: #c0392b;
 }
 
 .rank-badge {

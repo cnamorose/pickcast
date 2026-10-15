@@ -12,8 +12,9 @@ export default function WaitingPage() {
   const purchasedItem = location.state?.purchasedItem;
 
   useEffect(() => {
-    // 결제페이지를 거치지 않고 바로 이 페이지로 들어온 경우 처리
-    if (!purchasedItem) {
+    // 결제페이지를 거치지 않고 바로 들어왔거나, 새로고침으로 조회 기록이 사라진 경우 처리
+    // (조회 기록이 비어 있으면 서버가 에러를 내므로 호출하지 않는다)
+    if (!purchasedItem || views.length === 0) {
       navigate("/main", { replace: true });
       return;
     }
