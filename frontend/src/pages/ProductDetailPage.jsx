@@ -2,7 +2,8 @@ import { useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { getProduct, getRelated, CATEGORY_LABELS } from "../data/products";
 import { useShopping } from "../context/ShoppingContext";
-import { formatPrice } from "./HomePage";
+import ProductCard from "../components/ProductCard";
+import { formatPrice } from "../utils/format";
 
 export default function ProductDetailPage() {
   const { id } = useParams();
@@ -18,6 +19,11 @@ export default function ProductDetailPage() {
     if (product) logView(product.id);
   }, [product, logView]);
 
+  // 다른 상품으로 이동하면 화면 맨 위부터 보여준다.
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [id]);
+
   if (!product) {
     return (
       <div className="page">
@@ -27,40 +33,61 @@ export default function ProductDetailPage() {
     );
   }
 
+  const categoryLabel = CATEGORY_LABELS[product.category];
+
   return (
     <div className="page">
+      <div className="breadcrumb">
+        <Link to="/main">홈</Link>
+        <span>/</span>
+        <Link to={`/main?cat=${product.category}`}>{categoryLabel}</Link>
+        <span>/</span>
+        <span>{product.name}</span>
+      </div>
+
       <div className="detail">
-        <img src={product.image} alt={product.name} className="detail-image" />
+        <div className="detail-image-wrap">
+          <img src={product.image} alt={product.name} className="detail-image" />
+        </div>
+
         <div className="detail-info">
-          <div className="detail-category">{CATEGORY_LABELS[product.category]}</div>
-          <h2>{product.name}</h2>
-          <div className="price">{formatPrice(product.price)}</div>
+          <div className="detail-category">{categoryLabel}</div>
+          <h1 className="detail-title">{product.name}</h1>
+          <div className="detail-price">{formatPrice(product.price)}</div>
+
           <p className="description">{product.description}</p>
-          <button className="btn btn-black" onClick={() => navigate(`/checkout/${product.id}`)}>
+
+          <dl className="info-table">
+            <div>
+              <dt>상품 정보</dt>
+              <dd>{product.meta}</dd>
+            </div>
+            <div>
+              <dt>배송</dt>
+              <dd>무료배송 · 1~2일 이내 출고</dd>
+            </div>
+            <div>
+              <dt>교환/반품</dt>
+              <dd>수령 후 7일 이내 가능</dd>
+            </div>
+          </dl>
+
+          <button className="btn btn-black btn-block" onClick={() => navigate(`/checkout/${product.id}`)}>
             구매하기
           </button>
-          <p className="meta">{product.meta}</p>
         </div>
       </div>
 
-      <section className="section">
-        <h3 className="section-title">관련 상품</h3>
-        <div className="grid">
-          {related.map((p) => (
-            <div className="card" key={p.id}>
-              <Link to={`/products/${p.id}`}>
-                <img src={p.image} alt={p.name} className="card-image" />
-              </Link>
-              <div className="card-title">{p.name}</div>
-              <div className="card-sub">{p.description}</div>
-              <div className="card-price">{formatPrice(p.price)}</div>
-              <Link to={`/products/${p.id}`} className="btn btn-black">
-                상세보기
-              </Link>
-            </div>
-          ))}
-        </div>
-      </section>
+      {related.length > 0 && (
+        <section className="related">
+          <h3 className="section-title">같은 카테고리 상품</h3>
+          <div className="grid">
+            {related.map((p) => (
+              <ProductCard key={p.id} product={p} />
+            ))}
+          </div>
+        </section>
+      )}
     </div>
   );
 }
