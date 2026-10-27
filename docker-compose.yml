@@ -1,0 +1,30 @@
+# 로컬 개발용 PostgreSQL
+# 실행: docker compose up -d  (루트 .env의 계정 정보를 읽는다. 없으면 .env.example을 복사)
+# 데이터는 pickcast-db 볼륨에 남아서 컨테이너를 내렸다 올려도 유지된다.
+# 포트는 127.0.0.1에만 열어서 같은 네트워크의 다른 기기는 접속할 수 없다.
+services:
+  db:
+    image: postgres:17
+    container_name: pickcast-db
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:?.env에 POSTGRES_USER를 설정하세요}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?.env에 POSTGRES_PASSWORD를 설정하세요}
+      POSTGRES_DB: ${POSTGRES_DB:?.env에 POSTGRES_DB를 설정하세요}
+    # 5432는 Windows 예약 포트 범위(5355~5454)에 걸려서 15432로 연다
+    ports:
+      - "127.0.0.1:15432:5432"
+    volumes:
+      - pickcast-db:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  # 웹에서 DB 보기: http://localhost:8080 (서버: db, 계정은 .env 참고)
+  adminer:
+    image: adminer
+    container_name: pickcast-adminer
+    ports:
+      - "127.0.0.1:8080:8080"
+    depends_on:
+      - db
+
+volumes:
+  pickcast-db:

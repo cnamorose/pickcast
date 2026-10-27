@@ -1,17 +1,12 @@
-import sys
-from pathlib import Path
-
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+from sqlalchemy import text
 
-# ml/product_purchase 폴더를 Python import 경로에 추가
-PROJECT_ROOT = Path(__file__).resolve().parents[2]
-ML_DIR = PROJECT_ROOT / "ml" / "product_purchase"
-
-sys.path.insert(0, str(ML_DIR))
-
-from predict import FEATURE_LABELS, PurchasePredictor
+from . import models  # noqa: F401  테이블 정의를 등록
+from .db import create_tables, engine
+from .ml import FEATURE_LABELS, predictor
+from .sessions import router as sessions_router
 
 
 app = FastAPI()
@@ -24,8 +19,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# 서버가 시작될 때 ML 모델을 한 번만 로딩
-predictor = PurchasePredictor()
+create_tables()
+
+app.include_router(sessions_router)
 
 
 @app.get("/")
@@ -37,9 +33,17 @@ def root():
 
 @app.get("/health")
 def health():
+    try:
+        with engine.connect() as conn:
+            conn.execute(text("SELECT 1"))
+        db_status = "connected"
+    except Exception as error:
+        db_status = f"error: {error.__class__.__name__}"
+
     return {
         "status": "ok",
-        "ml_model": "loaded"
+        "ml_model": "loaded",
+        "db": db_status,
     }
 
 
