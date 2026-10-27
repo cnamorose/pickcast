@@ -1,7 +1,7 @@
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { getProduct } from "../data/products";
+import { getProduct, CATEGORY_LABELS } from "../data/products";
 import { useShopping } from "../context/ShoppingContext";
-import { formatPrice } from "./HomePage";
+import { formatPrice } from "../utils/format";
 
 export default function CheckoutPage() {
   const { id } = useParams();
@@ -32,20 +32,41 @@ export default function CheckoutPage() {
   }
 
   return (
-    <div className="page">
-      <h2>총액: {formatPrice(product.price)}</h2>
-      <div className="checkout-item">
-        <img src={product.image} alt={product.name} className="checkout-image" />
-        <div>
-          <div className="checkout-title">
-            {product.name} / 1 / {formatPrice(product.price)}
+    <div className="page page-narrow">
+      <h2 className="page-title">주문/결제</h2>
+
+      <div className="checkout-box">
+        <div className="checkout-label">주문 상품</div>
+        <div className="checkout-item">
+          <img src={product.image} alt={product.name} className="checkout-image" />
+          <div>
+            <div className="card-category">{CATEGORY_LABELS[product.category]}</div>
+            <div className="checkout-title">{product.name}</div>
+            <div className="checkout-sub">수량 1개</div>
           </div>
-          <p className="description">{product.description}</p>
+          <div className="checkout-price">{formatPrice(product.price)}</div>
         </div>
       </div>
 
-      <button className="btn btn-black pay-btn" onClick={handlePay}>
-        결제
+      <div className="checkout-box">
+        <div className="summary-row">
+          <span>상품 금액</span>
+          <span>{formatPrice(product.price)}</span>
+        </div>
+        <div className="summary-row">
+          <span>배송비</span>
+          <span>무료</span>
+        </div>
+        <div className="summary-row summary-total">
+          <span>총 결제 금액</span>
+          <span>{formatPrice(product.price)}</span>
+        </div>
+      </div>
+
+      <p className="checkout-note">데모용 가상 결제로, 실제 결제는 이루어지지 않습니다.</p>
+
+      <button className="btn btn-black btn-block" onClick={handlePay}>
+        {formatPrice(product.price)} 결제하기
       </button>
     </div>
   );

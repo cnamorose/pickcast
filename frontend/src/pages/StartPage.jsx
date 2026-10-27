@@ -20,8 +20,25 @@ export default function StartPage() {
 
   return (
     <div className="start-page">
+      <span className="start-eyebrow">AI 구매 예측 체험</span>
       <h1>PickCast</h1>
-      <button className="btn btn-black" onClick={handleStart}>
+      <p className="start-desc">
+        평소처럼 쇼핑하고 마음에 드는 상품 하나를 결제해보세요.
+        <br />
+        AI가 둘러본 기록만으로 무엇을 살지 예측했는지 알려드려요.
+      </p>
+      <ol className="start-steps">
+        <li>
+          <b>1</b>상품 둘러보기
+        </li>
+        <li>
+          <b>2</b>하나 골라 결제
+        </li>
+        <li>
+          <b>3</b>AI 예측 확인
+        </li>
+      </ol>
+      <button className="btn btn-white" onClick={handleStart}>
         시작하기
       </button>
     </div>
