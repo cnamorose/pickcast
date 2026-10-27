@@ -10,15 +10,23 @@ import "./styles.css";
 
 function Layout() {
   const location = useLocation();
-  const hideNavbar = location.pathname === "/"; // 체험시작 화면에는 상단바를 안 보여줌
+  const { pathname } = location;
+  const hideNavbar = pathname === "/"; // 체험시작 화면에는 상단바를 안 보여줌
+  // 상품 목록 버튼은 쇼핑 중(상세·결제)에만 보여준다.
+  // 결제 후에는 결과 화면의 "처음으로"로만 나가야 새 세션으로 시작된다.
+  const showListButton = pathname.startsWith("/products/") || pathname.startsWith("/checkout/");
 
   return (
     <>
       {!hideNavbar && (
         <nav className="navbar">
-          <Link to="/main" className="brand">
-            PickCast
-          </Link>
+          {/* 로고는 링크가 아님: 결제 후 로고로 쇼핑에 돌아가면 끝난 세션에 조회가 쌓이지 않음 */}
+          <span className="brand">PickCast</span>
+          {showListButton && (
+            <Link to="/main" className="nav-link">
+              상품 목록
+            </Link>
+          )}
         </nav>
       )}
       <Routes>

@@ -1,20 +1,20 @@
 import { useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useShopping } from "../context/ShoppingContext";
-import { fetchPrediction } from "../api/predict";
+import { fetchSessionPrediction } from "../api/session";
 
 // 결제 직후 보여주는 "결과대기" 화면.
 // 여기서 실제로 백엔드 예측 API를 호출하고, 끝나면 결과 화면으로 자동 이동한다.
 export default function WaitingPage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { views } = useShopping();
+  const { sessionId } = useShopping();
   const purchasedItem = location.state?.purchasedItem;
 
   useEffect(() => {
-    // 결제페이지를 거치지 않고 바로 들어왔거나, 새로고침으로 조회 기록이 사라진 경우 처리
-    // (조회 기록이 비어 있으면 서버가 에러를 내므로 호출하지 않는다)
-    if (!purchasedItem || views.length === 0) {
+    // 결제페이지를 거치지 않고 바로 들어왔거나, 세션이 없는 경우 처리
+    // (조회 기록은 서버에 있으므로 새로고침해도 세션만 있으면 결과를 받을 수 있다)
+    if (!purchasedItem || !sessionId) {
       navigate("/main", { replace: true });
       return;
     }
@@ -23,7 +23,7 @@ export default function WaitingPage() {
 
     async function run() {
       try {
-        const data = await fetchPrediction(views);
+        const data = await fetchSessionPrediction(sessionId);
         if (!cancelled) {
           navigate("/result", {
             replace: true,
