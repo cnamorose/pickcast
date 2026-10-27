@@ -18,11 +18,19 @@ a {
   background: #000;
   color: #fff;
   padding: 24px 80px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .brand {
   color: #fff;
   font-weight: 700;
+}
+
+.nav-link {
+  color: #fff;
+  font-size: 14px;
 }
 
 .hero {
