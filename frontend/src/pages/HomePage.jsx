@@ -59,6 +59,7 @@ export default function HomePage() {
       <footer className="footer">
         <div className="footer-brand">PickCast</div>
         <p>졸업작품 데모 쇼핑몰입니다. 실제 결제는 이루어지지 않습니다.</p>
+        <p>상품 이미지는 생성형 AI로 만든 이미지이며, 실제 판매 상품이 아닙니다.</p>
         <p className="attribution">
           데이터: Retailrocket recommender system dataset (CC BY-NC-SA 4.0)
         </p>
