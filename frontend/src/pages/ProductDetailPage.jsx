@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { getProduct, getRelated } from "../data/products";
+import { getProduct, getRelated, CATEGORY_LABELS } from "../data/products";
 import { useShopping } from "../context/ShoppingContext";
 import { formatPrice } from "./HomePage";
 
@@ -32,7 +32,7 @@ export default function ProductDetailPage() {
       <div className="detail">
         <img src={product.image} alt={product.name} className="detail-image" />
         <div className="detail-info">
-          <div className="detail-category">{product.category}</div>
+          <div className="detail-category">{CATEGORY_LABELS[product.category]}</div>
           <h2>{product.name}</h2>
           <div className="price">{formatPrice(product.price)}</div>
           <p className="description">{product.description}</p>
