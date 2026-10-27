@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { PRODUCTS, CATEGORIES } from "../data/products";
+import { PRODUCTS, CATEGORIES, CATEGORY_LABELS } from "../data/products";
 
 function formatPrice(price) {
   return `₩${price.toLocaleString("ko-KR")}`;
@@ -30,7 +30,7 @@ export default function HomePage() {
 
       {CATEGORIES.map((category) => (
         <section key={category} className="section">
-          <h2 className="category-title">{category}</h2>
+          <h2 className="category-title">{CATEGORY_LABELS[category]}</h2>
           <div className="grid">
             {PRODUCTS.filter((p) => p.category === category).map((p) => (
               <ProductCard key={p.id} product={p} />
