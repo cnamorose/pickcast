@@ -97,4 +97,3 @@ docker compose up -d
 | `POST /sessions/{id}/views` | 조회 저장 후 이 세션의 조회만으로 예측한 확률과 `stage` 반환 (`stage`는 현재 임시값) |
 | `POST /sessions/{id}/purchases` | 결제 저장, 세션을 `purchased`로 닫음 |
 | `GET /sessions/{id}/predictions` | 결과 화면용 예측과 확률 변화(`timeline`) |
-| `POST /predictions` | 기존 체험용. 프론트가 세션 API로 옮긴 뒤 삭제 예정 |
