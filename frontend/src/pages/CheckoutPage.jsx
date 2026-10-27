@@ -6,7 +6,7 @@ import { formatPrice } from "./HomePage";
 export default function CheckoutPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { setPurchasedItem } = useShopping();
+  const { purchase } = useShopping();
 
   const product = getProduct(id);
 
@@ -19,10 +19,15 @@ export default function CheckoutPage() {
     );
   }
 
-  function handlePay() {
-    // 결제 버튼을 누르면 바로 API를 부르지 않고, 먼저 "결과대기" 화면으로 이동한다.
+  async function handlePay() {
+    // 결제를 서버에 저장한 뒤 "결과대기" 화면으로 이동한다.
     // 실제 예측 API 호출은 결과대기 화면(WaitingPage)에서 처리한다.
-    setPurchasedItem(product.id);
+    try {
+      await purchase(product.id);
+    } catch (err) {
+      // 이미 결제한 세션(뒤로가기 후 재결제 등)이면 서버가 거절한다. 결과 화면은 그대로 보여준다.
+      console.warn("결제 기록 저장 실패:", err);
+    }
     navigate("/waiting", { state: { purchasedItem: product.id } });
   }
 
