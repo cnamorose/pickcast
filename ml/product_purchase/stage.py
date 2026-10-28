@@ -27,21 +27,38 @@ A의 lift는 4.1배 → 8.2배로 오히려 오르고, 아무것도 안 해도 5
 
 기준값(STAGE_THRESHOLDS)은 손으로 만든 조회 시나리오를 보고 정한 임시값이다.
 valid 데이터로 확정한 뒤 test로 한 번 확인한다.
+
+클릭 간격에 따라 확률이 달라진다. 첫 조회 후 경과 시간 피처 때문에 같은 상품을
+반복해서 봐도 빠르게 누르면 덜 오른다 (A B A A A: 30초 간격 4.15배, 1~5초 간격 2.52배).
+또 방금 본 상품은 한 번만 봐도 2.24배가 나와서, 빠르게 누를 때는 lift와 ratio만으로
+"모두 다른 상품을 본 경우"(2.24배, ratio 2.18)와 "같은 상품을 반복한 경우"(2.52배,
+ratio 2.27)를 가르기 어렵다. 그래서 살 마음 먹음에 1위 비중 조건을 더했다. 반복한
+경우 1위 비중은 66~74%, 모두 다른 상품을 본 경우는 30% 안팎이다.
+
+같은 이유로 한 번만 본 상품은 단계 판단 대상에서 뺀다. 관심 상품이 있는 상태에서 새 상품을
+한 번 열기만 해도 그 상품이 약 2.2배가 되어, 빼지 않으면 A A B 같은 흐름이 "A와 B를
+고민 중"으로 판정된다. 맞춤 화면에서는 모달을 잘못 띄우는 쪽이 놓치는 쪽보다 나쁘므로,
+애매하면 구경 중으로 둔다.
 """
+from collections import Counter
+
 
 STAGE_THRESHOLDS = {
     # 이보다 조회가 적으면 판단하지 않는다 (첫 조회만으로는 상품을 구분하지 못함, AUC 0.5)
     "min_views": 3,
-    # 살 마음 먹음: 1위 lift와 1·2위 ratio
-    "decided_lift": 3.0,
-    "decided_ratio": 2.0,
+    # 이보다 적게 본 상품은 고민 중·살 마음 먹음·떠나려는 중의 대상이 되지 않는다
+    "min_item_views": 2,
+    # 살 마음 먹음: 1위 lift, 1·2위 ratio, 1위 비중
+    "decided_lift": 2.0,
+    "decided_ratio": 1.8,
+    "decided_share": 0.5,
     # 고민 중: 1·2위가 모두 이 lift 이상이고 ratio가 이보다 작음
-    "comparing_lift": 2.0,
+    "comparing_lift": 1.8,
     "comparing_ratio": 1.5,
     "comparing_max_items": 3,
     # 떠나려는 중: 이 lift 이상인 관심 상품을 연속으로 이만큼 안 봤고,
     # 비중이 마지막으로 봤을 때의 이 비율 미만으로 떨어짐
-    "leaving_lift": 3.0,
+    "leaving_lift": 2.0,
     "leaving_absent_views": 3,
     "leaving_share_drop": 0.75,
 }
@@ -62,11 +79,13 @@ def _views_since(timeline, item):
     return None, None
 
 
-def _leaving_item(timeline, now, base_probability, t):
+def _leaving_item(timeline, now, base_probability, view_counts, t):
     """관심 상품 중 멀어지는 중인 것. 여러 개면 지금 확률이 가장 높은 것."""
     for item, probability in sorted(now.items(), key=lambda kv: -kv[1]):
         if probability / base_probability < t["leaving_lift"]:
             break
+        if view_counts[item] < t["min_item_views"]:
+            continue
         absent, then = _views_since(timeline, item)
         if absent is None or absent < t["leaving_absent_views"]:
             continue
@@ -101,25 +120,31 @@ def judge_stage(timeline, base_probability, thresholds=STAGE_THRESHOLDS):
     if total_views < t["min_views"] or not ranked:
         return result("browsing")
 
-    leaving = _leaving_item(timeline, now, base_probability, t)
+    view_counts = Counter(item for snapshot in timeline for item in snapshot["viewed"])
+
+    leaving = _leaving_item(timeline, now, base_probability, view_counts, t)
     if leaving is not None:
         return result("leaving", [leaving])
 
     lift = metrics["top1_lift"]
     ratio = metrics["top1_top2_ratio"]
-    if lift >= t["decided_lift"] and (ratio is None or ratio >= t["decided_ratio"]):
+    if (
+        view_counts[ranked[0][0]] >= t["min_item_views"]
+        and lift >= t["decided_lift"]
+        and (ratio is None or ratio >= t["decided_ratio"])
+        and metrics["top1_share"] >= t["decided_share"]
+    ):
         return result("decided", [ranked[0][0]])
 
-    if (
-        ratio is not None
-        and ranked[1][1] / base_probability >= t["comparing_lift"]
-        and ratio < t["comparing_ratio"]
-    ):
-        items = [
-            item
-            for item, probability in ranked[: t["comparing_max_items"]]
-            if probability / base_probability >= t["comparing_lift"]
-        ]
+    # 고민 중은 여러 번 본 상품끼리만 비교한다
+    interested = [
+        (item, probability)
+        for item, probability in ranked
+        if view_counts[item] >= t["min_item_views"]
+        and probability / base_probability >= t["comparing_lift"]
+    ]
+    if len(interested) >= 2 and interested[0][1] / interested[1][1] < t["comparing_ratio"]:
+        items = [item for item, _ in interested[: t["comparing_max_items"]]]
         return result("comparing", items)
 
     return result("browsing")

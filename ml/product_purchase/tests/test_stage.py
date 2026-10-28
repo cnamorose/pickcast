@@ -43,6 +43,9 @@ class JudgeStageRuleTest(unittest.TestCase):
         timeline = [
             snapshot("A", A=1),
             snapshot("B", A=1, B=1),
+            snapshot("C", A=1, B=1, C=1),
+            snapshot("A", A=2, B=1, C=1),
+            snapshot("B", A=2, B=2, C=1),
             snapshot("C", A=2.5, B=2.2, C=2.1),
         ]
         result = judge_stage(timeline, BASE)
@@ -53,9 +56,29 @@ class JudgeStageRuleTest(unittest.TestCase):
         timeline = [
             snapshot("A", A=1),
             snapshot("B", A=1, B=1),
+            snapshot("C", A=1, B=1, C=1),
+            snapshot("A", A=2, B=1, C=1),
+            snapshot("B", A=2, B=2, C=1),
             snapshot("C", A=2.5, B=2.2, C=1.2),
         ]
         self.assertEqual(judge_stage(timeline, BASE)["items"], ["A", "B"])
+
+    def test_single_view_item_is_not_compared(self):
+        # 방금 한 번 연 B는 확률이 높아도 고민 대상이 아님 (A A B)
+        timeline = [
+            snapshot("A", A=1),
+            snapshot("A", A=2.5),
+            snapshot("B", A=2.6, B=2.2),
+        ]
+        self.assertNotEqual(judge_stage(timeline, BASE)["stage"], "comparing")
+
+    def test_decided_requires_repeat_view(self):
+        timeline = [
+            snapshot("A", A=1),
+            snapshot("B", A=1, B=1),
+            snapshot("C", A=1, B=1, C=4),
+        ]
+        self.assertNotEqual(judge_stage(timeline, BASE)["stage"], "decided")
 
     def test_no_standout_is_browsing(self):
         timeline = [
@@ -67,6 +90,7 @@ class JudgeStageRuleTest(unittest.TestCase):
 
     def test_leaving_when_share_drops_without_revisit(self):
         timeline = [
+            snapshot("A", A=1),
             snapshot("A", A=4),
             snapshot("B", A=4, B=2),
             snapshot("C", A=4, B=2, C=2),
@@ -79,6 +103,7 @@ class JudgeStageRuleTest(unittest.TestCase):
     def test_leaving_checked_before_decided(self):
         # A를 안 보는 동안 A의 lift가 올라 decided 조건도 만족하지만 leaving이 우선
         timeline = [
+            snapshot("A", A=1),
             snapshot("A", A=4),
             snapshot("B", A=4, B=1),
             snapshot("C", A=4, B=1, C=1),
@@ -96,13 +121,25 @@ class JudgeStageRuleTest(unittest.TestCase):
         self.assertNotEqual(judge_stage(timeline, BASE)["stage"], "leaving")
 
     def test_low_lift_item_is_not_leaving(self):
+        low = STAGE_THRESHOLDS["leaving_lift"] * 0.8
         timeline = [
-            snapshot("A", A=2),
-            snapshot("B", A=2, B=1),
-            snapshot("C", A=2, B=1, C=1),
-            snapshot("D", A=2, B=1, C=1, D=1),
+            snapshot("A", A=low),
+            snapshot("B", A=low, B=1),
+            snapshot("C", A=low, B=1, C=1),
+            snapshot("D", A=low, B=1, C=1, D=1),
         ]
         self.assertNotEqual(judge_stage(timeline, BASE)["stage"], "leaving")
+
+    def test_low_share_top_item_is_not_decided(self):
+        # lift와 ratio는 충분하지만 후보가 많아 1위 비중이 낮으면 살 마음 먹음이 아님
+        timeline = [
+            snapshot("A", A=1),
+            snapshot("B", A=1, B=1),
+            snapshot("C", A=1, B=1, C=1),
+            snapshot("D", A=1, B=1, C=1, D=1),
+            snapshot("D", A=1, B=1, C=1, D=2.5),
+        ]
+        self.assertNotEqual(judge_stage(timeline, BASE)["stage"], "decided")
 
     def test_thresholds_can_be_overridden(self):
         timeline = [
@@ -147,6 +184,35 @@ class JudgeStageScenarioTest(unittest.TestCase):
         result = self.judge("AAABCDEF", gap=20 * SECOND)
         self.assertEqual(result["stage"], "leaving")
         self.assertEqual(result["items"], ["A"])
+
+    def test_scenarios_hold_across_click_intervals(self):
+        # 상세페이지에 머무는 시간은 사람마다 다르다. 빠르게 눌러도 같은 단계가 나와야 한다.
+        expected = {
+            "ABCDEF": "browsing",
+            "ABAAA": "decided",
+            "ABABAB": "comparing",
+            "AAABCDEF": "leaving",
+        }
+        for seconds in [1, 5, 10, 20, 30]:
+            for items, stage in expected.items():
+                with self.subTest(gap=seconds, items=items):
+                    self.assertEqual(self.judge(items, gap=seconds * SECOND)["stage"], stage)
+
+    def test_no_false_alarm_across_click_intervals(self):
+        # 정답 단계를 정하기 애매한 흐름은 "잘못 띄우지 않는지"만 본다.
+        # 모달을 잘못 띄우는 쪽이 놓치는 쪽보다 나쁘다.
+        not_expected = [
+            ("AAB", "comparing"),  # A 두 번 후 B를 한 번 열었을 뿐
+            ("AAAB", "comparing"),
+            ("AAABC", "comparing"),
+            ("ABA", "decided"),  # 조회 3번, A 재방문 1번으로는 이르다
+            ("ABCDEFGH", "decided"),  # 모두 다른 상품
+            ("ABCDEFGH", "comparing"),
+        ]
+        for seconds in [1, 5, 10, 20, 30]:
+            for items, stage in not_expected:
+                with self.subTest(gap=seconds, items=items):
+                    self.assertNotEqual(self.judge(items, gap=seconds * SECOND)["stage"], stage)
 
 
 if __name__ == "__main__":
