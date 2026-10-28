@@ -101,6 +101,19 @@ def add_purchase(
     return {"session_id": session_id, "item_id": purchase.item_id, "status": session.status}
 
 
+def views_before_decision(views, purchased_item):
+    """결제하러 들어간 마지막 방문(끝에 연달아 있는 구매 상품 조회)을 뺀 조회 목록.
+
+    구매하려면 상품 상세페이지를 거쳐야 해서, 구매 상품은 항상 마지막 조회가 된다.
+    이 조회까지 넣으면 "방금 본 상품"이라는 이유만으로 맞히게 되므로 채점에서 뺀다.
+    그보다 앞에서 본 구매 상품 조회는 결정 전부터의 관심이라 남긴다.
+    """
+    end = len(views)
+    while end > 0 and views[end - 1][1] == purchased_item:
+        end -= 1
+    return views[:end]
+
+
 @router.get("/{session_id}/predictions")
 def get_predictions(session_id: str, db: Session = Depends(get_db)):
     get_session(db, session_id)
@@ -109,8 +122,18 @@ def get_predictions(session_id: str, db: Session = Depends(get_db)):
     if not views:
         raise HTTPException(status_code=400, detail="조회 기록이 없습니다.")
 
+    purchase = db.exec(
+        select(Purchase).where(Purchase.session_id == session_id).order_by(Purchase.id)
+    ).first()
+    purchased_item = purchase.item_id if purchase else None
+    scored_views = views_before_decision(views, purchased_item) if purchase else views
+
     return {
-        "prediction": predictor.predict(views),
+        # 결제하러 들어간 마지막 방문 직전 기준의 예측. 남는 조회가 없으면 null
+        "prediction": predictor.predict(scored_views) if scored_views else None,
+        "purchased_item": purchased_item,
+        "excluded_views": len(views) - len(scored_views),
+        # 확률 변화는 결제 직전까지 전체를 보여준다
         "timeline": predictor.timeline(views),
         "feature_labels": FEATURE_LABELS,
     }

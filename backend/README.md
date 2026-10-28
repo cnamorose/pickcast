@@ -95,6 +95,10 @@ docker compose up -d
 |---|---|
 | `POST /sessions` | 세션 생성. `previous_session_id`를 보내면 결제 없이 끝난 이전 세션을 `abandoned`로 닫음 |
 | `POST /sessions/{id}/views` | 조회 저장 후 이 세션의 조회만으로 예측한 확률과 구매 의도 단계 반환. 단계는 `views.stage`에도 저장 |
+| `POST /sessions/{id}/purchases` | 결제 저장, 세션을 `purchased`로 닫음 |
+| `GET /sessions/{id}/predictions` | 결과 화면용 예측과 확률 변화(`timeline`) |
+
+### 구매 의도 단계 (`stage`)
 
 조회 API 응답의 `stage`는 사용자 맞춤 화면용입니다. 판단 규칙은 `ml/product_purchase/stage.py`에 있습니다.
 
@@ -108,5 +112,11 @@ docker compose up -d
 | `comparing` | 고민 중 | 고민 중인 상품 2~3개 (비교 카드용) |
 | `decided` | 살 마음 먹음 | 1위 상품 (구매 버튼 강조용) |
 | `leaving` | 떠나려는 중 | 관심이 멀어지는 상품 (찜·가격 알림용) |
-| `POST /sessions/{id}/purchases` | 결제 저장, 세션을 `purchased`로 닫음 |
-| `GET /sessions/{id}/predictions` | 결과 화면용 예측과 확률 변화(`timeline`) |
+
+### 결과 화면 예측
+
+구매하려면 상품 상세페이지를 거쳐야 해서, 구매 상품은 항상 마지막 조회가 됩니다. 이 조회까지 넣으면 "방금 본 상품"이라는 이유만으로 맞히게 되므로, 결과 API의 `prediction`은 결제하러 들어간 마지막 방문(끝에 연달아 있는 구매 상품 조회)을 빼고 계산합니다.
+
+* `excluded_views`: 뺀 조회 수
+* `prediction`: 빼고 나서 남는 조회가 없으면 `null`
+* `timeline`: 확률 변화는 결제 직전까지 전체를 보여줌
