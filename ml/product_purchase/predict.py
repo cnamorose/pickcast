@@ -59,6 +59,8 @@ class PurchasePredictor:
             model_file=str(directory / f"{self.calibration['model']}.txt")
         )
         self.threshold = self.calibration["threshold"]
+        # 상품을 한 번만 봤을 때의 확률. 단계 판단(stage.py)에서 배수(lift)의 기준으로 쓴다.
+        self.base_probability = self.timeline([(0, "base")])[0]["probabilities"]["base"]
 
     def _replay(self, views, purchases=()):
         """조회를 시간순으로 반영하며 예측 시점마다 (시각, 조회한 상품, 상태, 상품 ID 표)를 낸다.
