@@ -39,6 +39,9 @@ class View(SQLModel, table=True):
     item_id: str
     # 조회 시각 (epoch ms). 모델 입력과 같은 단위
     timestamp: int = Field(sa_type=BigInteger)
+    # 이 조회 직후 판단한 구매 의도 단계 (browsing / comparing / decided / leaving)
+    # 기준값이 바뀌어도 그때 사용자에게 보여준 단계가 남도록 저장한다.
+    stage: str | None = None
     created_at: datetime = Field(
         default_factory=utc_now, sa_type=DateTime(timezone=True)
     )

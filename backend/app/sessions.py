@@ -5,13 +5,10 @@ from pydantic import BaseModel
 from sqlmodel import Session, select
 
 from .db import get_db
-from .ml import FEATURE_LABELS, MODEL_VERSION, predictor
+from .ml import FEATURE_LABELS, MODEL_VERSION, judge_stage, predictor
 from .models import Purchase, ShoppingSession, View, utc_now
 
 router = APIRouter(prefix="/sessions", tags=["sessions"])
-
-# judge_stage 완성 전까지 쓰는 가짜 단계
-PLACEHOLDER_STAGE = "browsing"
 
 
 class CreateSessionRequest(BaseModel):
@@ -69,12 +66,20 @@ def create_session(request: CreateSessionRequest, db: Session = Depends(get_db))
 def add_view(session_id: str, request: ItemRequest, db: Session = Depends(get_db)):
     get_active_session(db, session_id)
 
-    db.add(View(session_id=session_id, item_id=request.item_id, timestamp=now_ms()))
+    view = View(session_id=session_id, item_id=request.item_id, timestamp=now_ms())
+    db.add(view)
+    db.flush()
+
+    views = load_views(db, session_id)
+    stage = judge_stage(predictor.timeline(views), predictor.base_probability)
+    view.stage = stage["stage"]
+    db.add(view)
     db.commit()
 
     return {
-        "prediction": predictor.predict(load_views(db, session_id)),
-        "stage": PLACEHOLDER_STAGE,
+        "prediction": predictor.predict(views),
+        # metrics는 기준값 조정용이라 화면에는 보내지 않는다.
+        "stage": {"stage": stage["stage"], "items": stage["items"]},
     }
 
 
