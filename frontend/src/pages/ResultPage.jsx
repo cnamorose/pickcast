@@ -70,16 +70,42 @@ export default function ResultPage() {
     );
   }
 
+  // 예측은 결제하러 들어간 마지막 방문 직전 기준이다 (백엔드에서 그 조회를 빼고 계산).
+  // 구매한 상품만 보고 결제했으면 뺀 뒤 남는 조회가 없어 prediction이 null이다.
+  if (!result.prediction) {
+    return (
+      <div className="page">
+        <h2>구매한 상품: {purchasedItem}</h2>
+        <p className="info-note">
+          구매한 상품만 보고 결제해서, 결정하기 전의 기록으로 AI가 예측할 수 없었어요. 여러 상품을
+          둘러본 뒤 결제하면 AI가 미리 맞혀볼 수 있어요.
+        </p>
+        <Link to="/" className="btn btn-black" style={{ marginTop: 24, display: "inline-block" }}>
+          처음으로 (다음 체험)
+        </Link>
+      </div>
+    );
+  }
+
   const { candidates } = result.prediction;
   const featureLabels = result.feature_labels || {};
   const topCandidate = candidates[0];
   const matched = topCandidate && topCandidate.item_id === purchasedItem;
   const purchasedCandidate = candidates.find((c) => c.item_id === purchasedItem);
 
-  // 상품을 하나만 보고 결제한 경우 후보가 그 상품 하나뿐이라 항상 1순위가 된다.
-  // 이때는 "예측 성공" 메시지를 보여주지 않고 안내만 보여준다.
-  const onlyOneViewed =
-    purchasedCandidate && purchasedCandidate.features?.distinct_items_viewed === 1;
+  // 결정하기 전에는 구매 상품을 보지 않아 AI 후보에 없었던 경우
+  const notInCandidates = !purchasedCandidate;
+
+  // 성공/실패 대신 구매 상품을 몇 순위로 예측했는지 보여준다 (모델 평가의 후보 순위와 같은 기준).
+  // 결정 직전 기준이라 구매 상품 외에 다른 후보가 항상 있으므로 순위가 의미를 가진다.
+  let resultMessage;
+  if (notInCandidates) {
+    resultMessage = "AI 후보에 없던 상품을 선택했어요.";
+  } else if (matched) {
+    resultMessage = "AI가 정확하게 예측했어요!";
+  } else {
+    resultMessage = `AI는 이 상품을 ${purchasedCandidate.rank}순위로 예측했어요 (후보 ${candidates.length}개 중).`;
+  }
 
   const f = purchasedCandidate?.features || {};
   const { up, down } = splitFactors(purchasedCandidate?.shap?.contributions);
@@ -102,21 +128,22 @@ export default function ResultPage() {
         ))}
       </div>
 
-      {onlyOneViewed ? (
+      <p className="predict-message">{resultMessage}</p>
+
+      {result.excluded_views > 0 && (
         <p className="info-note">
-          상품을 하나만 보고 결제해서 AI가 비교할 후보가 없었어요. 여러 상품을 둘러볼수록 상품별
-          예측이 더 뚜렷하게 갈려요.
-        </p>
-      ) : (
-        <p className="predict-message">
-          {matched ? "AI가 정확하게 예측했습니다!" : "AI 예측과 다른 상품을 선택했어요."}
+          결제하러 들어간 마지막 상품 조회는 빼고, 그 직전까지의 기록으로 예측했어요.
         </p>
       )}
 
       <div className="explain-box">
         <div className="explain-title">예측 이유 ({purchasedItem})</div>
 
-        {up.length === 0 && down.length === 0 ? (
+        {notInCandidates ? (
+          <p className="predict-message">
+            구매한 상품은 결정하기 전에 보지 않아서 AI 후보에 없었어요.
+          </p>
+        ) : up.length === 0 && down.length === 0 ? (
           <p className="predict-message">이 상품에 대한 예측 이유 정보가 없어요.</p>
         ) : (
           <>
