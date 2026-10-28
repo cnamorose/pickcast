@@ -94,6 +94,19 @@ docker compose up -d
 | API | 설명 |
 |---|---|
 | `POST /sessions` | 세션 생성. `previous_session_id`를 보내면 결제 없이 끝난 이전 세션을 `abandoned`로 닫음 |
-| `POST /sessions/{id}/views` | 조회 저장 후 이 세션의 조회만으로 예측한 확률과 `stage` 반환 (`stage`는 현재 임시값) |
+| `POST /sessions/{id}/views` | 조회 저장 후 이 세션의 조회만으로 예측한 확률과 구매 의도 단계 반환. 단계는 `views.stage`에도 저장 |
+
+조회 API 응답의 `stage`는 사용자 맞춤 화면용입니다. 판단 규칙은 `ml/product_purchase/stage.py`에 있습니다.
+
+```json
+"stage": { "stage": "comparing", "items": ["A", "B"] }
+```
+
+| `stage` | 뜻 | `items` |
+|---|---|---|
+| `browsing` | 구경 중 | 빈 목록 |
+| `comparing` | 고민 중 | 고민 중인 상품 2~3개 (비교 카드용) |
+| `decided` | 살 마음 먹음 | 1위 상품 (구매 버튼 강조용) |
+| `leaving` | 떠나려는 중 | 관심이 멀어지는 상품 (찜·가격 알림용) |
 | `POST /sessions/{id}/purchases` | 결제 저장, 세션을 `purchased`로 닫음 |
 | `GET /sessions/{id}/predictions` | 결과 화면용 예측과 확률 변화(`timeline`) |
