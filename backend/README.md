@@ -109,4 +109,4 @@ docker compose up -d
 | `decided` | 살 마음 먹음 | 1위 상품 (구매 버튼 강조용) |
 | `leaving` | 떠나려는 중 | 관심이 멀어지는 상품 (찜·가격 알림용) |
 | `POST /sessions/{id}/purchases` | 결제 저장, 세션을 `purchased`로 닫음 |
-| `GET /sessions/{id}/predictions` | 결과 화면용 예측과 확률 변화(`timeline`) |
+| `GET /sessions/{id}/predictions` | 결과 화면용 예측과 확률 변화(`timeline`). 예측은 결제하러 들어간 마지막 방문(끝에 연달아 있는 구매 상품 조회)을 빼고 계산하며, 뺀 조회 수는 `excluded_views`, 남는 조회가 없으면 `prediction`은 `null` |
