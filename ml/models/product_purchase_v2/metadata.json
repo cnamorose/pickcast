@@ -1,0 +1,18 @@
+{
+  "version": "product_purchase_v2",
+  "created": "2026-10-29",
+  "description": "v1 모델을 RetailRocket valid 일반 고객 기준으로 다시 보정",
+  "based_on": "product_purchase_v1",
+  "training_data": "product_purchase_v1와 같은 모델 파일 (다시 학습하지 않음)",
+  "calibration_data": "RetailRocket valid 일반 고객(조회 100회 미만) 중 절반(A), 후보 상품별 같은 가중치",
+  "evaluation": {
+    "data": "RetailRocket valid 일반 고객 중 보정에 쓰지 않은 절반(B)",
+    "mean_prediction": 0.009378,
+    "positive_rate": 0.008713,
+    "log_loss": 0.045524,
+    "roc_auc": 0.7556,
+    "dashboard_expected_vs_actual": 0.3996,
+    "threshold": 0.0409
+  },
+  "notes": "조회 100회 이상 고객에게는 확률이 낮게 나올 수 있다. docs/ml/recalibration-v2.md 참고"
+}

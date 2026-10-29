@@ -45,18 +45,23 @@ GRID = {
 }
 
 
-def load_points(split="valid"):
+def load_points(split="valid", directory=None):
     """일반 고객 행에 확률을 붙이고, 조회 시점(고객, 시각) 경계를 구한다.
 
     test 평가(evaluate_extension_test.py)도 같은 방법을 쓰도록 구간을 받는다.
+    directory를 주면 그 버전 폴더의 모델로, 없으면 지금 서비스 버전(current.json)으로 계산한다.
     """
     frame = load_split(split)
     frame = frame.loc[frame["heavy_user"] == 0].reset_index(drop=True)
 
-    predictor = PurchasePredictor()
+    predictor = PurchasePredictor(directory) if directory else PurchasePredictor()
     raw = predictor.model.predict(frame[FEATURES])
     probability = apply_calibration(raw, predictor.calibration)
+    return points_from_frame(frame, probability, predictor.base_probability)
 
+
+def points_from_frame(frame, probability, base_probability):
+    """학습 행(고객·시각 순으로 연속 저장)과 행별 확률로 조회 시점 단위 묶음을 만든다."""
     visitor = frame["visitorid"].to_numpy()
     cutoff = frame["cutoff_timestamp"].to_numpy()
     starts = np.flatnonzero(
@@ -70,7 +75,7 @@ def load_points(split="valid"):
         "label": frame["label"].to_numpy(),
         "probability": probability,
         "starts": np.r_[starts, len(frame)],
-        "base_probability": predictor.base_probability,
+        "base_probability": base_probability,
     }
 
 
