@@ -1,0 +1,15 @@
+{
+  "version": "product_purchase_v1",
+  "created": "2026-09-30",
+  "description": "RetailRocket 전체로 학습한 기준 모델 (LightGBM 예측 시점 가중, isotonic_smooth 보정)",
+  "based_on": null,
+  "training_data": "RetailRocket events.csv 전체 (train 42,657,643행)",
+  "calibration_data": "RetailRocket valid 전체 고객 (조회 시점 가중)",
+  "evaluation": {
+    "data": "RetailRocket test (조회 시점 가중)",
+    "ap": 0.0310,
+    "top1_hit_rate": 0.3169,
+    "threshold": 0.0427
+  },
+  "notes": "일반 고객(조회 100회 미만)에게는 확률이 높게 나온다 (valid 일반 고객 행: 예측 1.029%, 실제 0.900%). docs/ml/extension-test-results.md 참고"
+}

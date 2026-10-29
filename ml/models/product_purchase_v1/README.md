@@ -6,6 +6,7 @@
 | --- | --- |
 | `lgbm_point.txt` | LightGBM 모델(예측 시점 가중치, 23회 반복) |
 | `calibration.json` | 확률 보정(`isotonic_smooth`), 구매 판정 임계값(4.27%), valid 보정 지표 |
+| `metadata.json` | 버전 정보: 만든 날짜, 설명, 학습·보정 데이터, test 성능, 알려진 문제 |
 
 - 학습 데이터: RetailRocket `events.csv` 전체에서 만든 조회 시점별·후보 상품별 행
 - 입력 피처: 조회 행동 8개(`ml/product_purchase/features.py`)
@@ -18,7 +19,7 @@
 
 ## 버전 관리
 
-서비스 모델을 바꿀 때는 이 폴더를 덮어쓰지 않고 `product_purchase_v2/`처럼 새 폴더를 만든 뒤 `predict.py`의 `RELEASE_DIR`을 바꾼다. 어떤 모델로 어떤 결과를 냈는지 커밋 기록으로 추적하기 위해서다.
+서비스 모델을 바꿀 때는 이 폴더를 덮어쓰지 않고 `product_purchase_v2/`처럼 새 폴더를 만든다. 어떤 모델로 어떤 결과를 냈는지 커밋 기록으로 추적하기 위해서다. 서비스가 쓸 버전은 `ml/models/current.json`이 정하며, `ml/product_purchase/release.py`로 바꾸고 되돌린다 ([ml/README](../../README.md) 참고).
 
 ## 데이터 출처와 라이선스
 

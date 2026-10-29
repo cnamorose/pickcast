@@ -1,8 +1,8 @@
 """조회 로그로 후보 상품별 구매 확률을 예측한다. 서비스 연결용 추론 모듈이다.
 
-학습 데이터와 같은 UserViewState로 피처를 계산하고, ml/models/product_purchase_v1/의
-확정 모델·보정·임계값을 사용한다. 입력에는 조회 로그만 사용하며 최종 선택·결제 정보는
-넣지 않는다.
+학습 데이터와 같은 UserViewState로 피처를 계산하고, ml/models/current.json이 가리키는
+버전 폴더(예: ml/models/product_purchase_v1/)의 확정 모델·보정·임계값을 사용한다.
+입력에는 조회 로그만 사용하며 최종 선택·결제 정보는 넣지 않는다.
 
     predictor = PurchasePredictor()
     result = predictor.predict([(timestamp_ms, "A"), (timestamp_ms, "B"), ...])
@@ -19,13 +19,14 @@ import lightgbm as lgb
 import numpy as np
 import pandas as pd
 
-from events import ml_dir
 from features import FEATURES, UserViewState
 from modeling import apply_calibration
+from release import release_dir
 
 
 # 서비스에 쓰는 확정 모델. 학습 결과(ml/data/product_purchase/models/)와 달리 Git으로 관리한다.
-RELEASE_DIR = ml_dir / "models" / "product_purchase_v1"
+# ml/models/current.json이 가리키는 버전 폴더다 (release.py로 바꾼다).
+RELEASE_DIR = release_dir()
 
 
 FEATURE_LABELS = {
@@ -52,6 +53,7 @@ def to_milliseconds(values):
 class PurchasePredictor:
     def __init__(self, directory=RELEASE_DIR):
         directory = Path(directory)
+        self.version = directory.name
         self.calibration = json.loads(
             (directory / "calibration.json").read_text(encoding="utf-8")
         )
