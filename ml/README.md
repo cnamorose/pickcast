@@ -145,6 +145,14 @@ CSV(`timestamp`, `itemid` 컬럼)로 결과를 바로 확인할 수도 있습니
 
 결과는 `ml/data/product_purchase/stage_validation.json`(그리드는 `stage_validation_grid.json`)에 저장됩니다.
 
+기준값을 정한 뒤 확장 기능(단계별 구매율, 단순 규칙과의 1순위 비교, 대시보드 90% 범위 적중률)을 test로 한 번 확인합니다. 결과는 [docs/ml/extension-test-results.md](../docs/ml/extension-test-results.md)에 정리했습니다.
+
+```powershell
+.\ml\.venv\Scripts\python.exe ml/product_purchase/evaluate_extension_test.py
+```
+
+`ml/data/product_purchase/models/extension_test_metrics.json`이 이미 있으면 실행되지 않습니다.
+
 ### 8. 테스트
 
 ```powershell
