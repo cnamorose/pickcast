@@ -7,6 +7,7 @@ ML_DIR = PROJECT_ROOT / "ml" / "product_purchase"
 
 sys.path.insert(0, str(ML_DIR))
 
+from dashboard import compare_pairs, count_stages, forecast_sales  # noqa: E402
 from predict import FEATURE_LABELS, RELEASE_DIR, PurchasePredictor  # noqa: E402
 from stage import judge_stage  # noqa: E402
 
@@ -16,4 +17,12 @@ predictor = PurchasePredictor()
 # 세션에 기록할 모델 버전 (모델 폴더 이름)
 MODEL_VERSION = RELEASE_DIR.name
 
-__all__ = ["FEATURE_LABELS", "MODEL_VERSION", "judge_stage", "predictor"]
+__all__ = [
+    "FEATURE_LABELS",
+    "MODEL_VERSION",
+    "compare_pairs",
+    "count_stages",
+    "forecast_sales",
+    "judge_stage",
+    "predictor",
+]

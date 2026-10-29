@@ -97,6 +97,7 @@ docker compose up -d
 | `POST /sessions/{id}/views` | 조회 저장 후 이 세션의 조회만으로 예측한 확률과 구매 의도 단계 반환. 단계는 `views.stage`에도 저장 |
 | `POST /sessions/{id}/purchases` | 결제 저장, 세션을 `purchased`로 닫음 |
 | `GET /sessions/{id}/predictions` | 결과 화면용 예측과 확률 변화(`timeline`) |
+| `GET /dashboard` | 판매자 대시보드. 지금 쇼핑 중인 세션의 상품별 예상 구매, 단계별 인원, 자주 비교되는 상품 쌍 |
 
 ### 구매 의도 단계 (`stage`)
 
@@ -120,3 +121,48 @@ docker compose up -d
 * `excluded_views`: 뺀 조회 수
 * `prediction`: 빼고 나서 남는 조회가 없으면 `null`
 * `timeline`: 확률 변화는 결제 직전까지 전체를 보여줌
+
+### 판매자 대시보드 (`/dashboard`)
+
+마지막 조회가 최근 30분 안에 있는 `active` 세션을 "지금 쇼핑 중"으로 보고 모읍니다. 계산 함수는 `ml/product_purchase/dashboard.py`에 있습니다.
+
+```json
+{
+  "generated_at": "2026-10-29T14:03:00+00:00",
+  "active_sessions": 23,
+  "active_window_minutes": 30,
+  "products": [
+    { "item_id": "DRESS-01", "viewers": 4, "expected": 0.05, "low": 0, "high": 0,
+      "at_least_one": 0.049, "purchased": 1, "stock": 8 }
+  ],
+  "stages": { "browsing": 8, "comparing": 6, "decided": 5, "leaving": 4 },
+  "compare_pairs": [ { "items": ["BOTTOM-03", "BOTTOM-04"], "sessions": 1 } ],
+  "insights": []
+}
+```
+
+| 필드 | 뜻 | 범위 |
+|---|---|---|
+| `products[].viewers` | 이 상품을 본 고객 수 | 쇼핑 중 세션 |
+| `products[].expected`, `low`, `high` | 예상 구매 수와 90% 범위 | 쇼핑 중 세션 |
+| `products[].at_least_one` | 1명 이상 살 확률 (정렬 기준) | 쇼핑 중 세션 |
+| `products[].purchased` | 실제 결제 수 | 전체 누적 |
+| `products[].stock` | 가상 재고 (`backend/app/inventory.py`) | 고정값 |
+| `stages` | 단계별 세션 수 | 쇼핑 중 세션 |
+| `compare_pairs` | 고민 중 세션이 비교한 상품 쌍 (상위 10개) | 쇼핑 중 세션 |
+| `insights` | 규칙 기반 안내 문장 (추가 예정) | |
+
+* 상품 48개가 모두 나오며, 아무도 안 본 상품은 0으로 채웁니다. 상품 이름·사진·가격은 프론트가 `item_id`로 `products.js`에서 찾습니다.
+* 예상 구매 수는 기간 단위가 아니라 "지금 보는 고객 중 결국 몇 명이 살지"입니다. 확률이 작아 대부분 0.1개 미만이므로 화면에서는 `at_least_one`이 읽기 쉽습니다.
+
+### 대시보드 확인용 가상 손님
+
+서버를 띄운 상태에서 실행하면 실제 API로 가상 손님의 쇼핑 기록을 만듭니다. 확률과 단계는 모두 실제 모델로 계산됩니다.
+
+```powershell
+python backend/scripts/seed_dashboard.py --shoppers 30
+```
+
+* `--purchase-rate`: 결제하고 떠나는 손님 비율 (기본 0.3). 나머지는 쇼핑 중으로 남습니다.
+* `--seed`: 같은 손님 구성을 다시 만들 때 지정
+* 30분이 지나면 쇼핑 중에서 빠지므로 다시 실행하면 됩니다. 데이터를 지우려면 `docker compose down -v`
