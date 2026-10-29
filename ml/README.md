@@ -123,6 +123,14 @@ ml/data/
 
 모델 파일이 없는 등 쓸 수 없는 폴더로는 바뀌지 않습니다.
 
+#### 재보정으로 새 버전 만들기
+
+v1 모델을 valid 일반 고객 기준으로 다시 보정해 v2를 만듭니다. valid 일반 고객을 반으로 나눠 보정·평가하고, 등록 기준을 모두 통과해야 `ml/models/product_purchase_v2/`를 만듭니다. `current.json`은 바꾸지 않습니다. 결과는 [docs/ml/recalibration-v2.md](../docs/ml/recalibration-v2.md)에 정리했습니다.
+
+```powershell
+.\ml\.venv\Scripts\python.exe ml/product_purchase/recalibrate.py
+```
+
 ### 6. 조회 로그로 예측하기
 
 서비스 연결에는 `product_purchase/predict.py`의 `PurchasePredictor`를 사용합니다. Git에 포함된 확정 모델(`ml/models/current.json`이 가리키는 버전 폴더의 `calibration.json`과 그 안의 `model`에 적힌 모델 파일)을 읽으므로 원본 데이터나 학습 과정 없이 바로 사용할 수 있습니다.
@@ -171,4 +179,4 @@ CSV(`timestamp`, `itemid` 컬럼)로 결과를 바로 확인할 수도 있습니
 .\ml\.venv\Scripts\python.exe -m unittest discover -s ml/product_purchase/tests -t ml/product_purchase -v
 ```
 
-`test_features.py`는 손으로 만든 조회 기록으로 피처 정의를 확인합니다. `test_predict.py`는 Git에 포함된 확정 모델로 추론 결과의 형식과 일관성을 확인합니다. `test_release.py`는 임시 폴더로 버전 반영·되돌리기를 확인하고, `current.json`이 쓸 수 있는 버전을 가리키는지 확인합니다.
+`test_features.py`는 손으로 만든 조회 기록으로 피처 정의를 확인합니다. `test_predict.py`는 Git에 포함된 확정 모델로 추론 결과의 형식과 일관성을 확인합니다. `test_release.py`는 임시 폴더로 버전 반영·되돌리기를 확인하고, `current.json`이 쓸 수 있는 버전을 가리키는지 확인합니다. `test_stage.py`의 시나리오 테스트는 `ml/models/`에 등록된 모든 버전으로 단계 판단을 확인하므로, 새 버전을 등록하면 단계 기준값이 그 버전에서도 통하는지 바로 드러납니다. `test_recalibrate.py`는 재보정의 등록 기준을 확인합니다.
