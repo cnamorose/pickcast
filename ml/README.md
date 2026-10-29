@@ -109,11 +109,23 @@ ml/data/
 
 학습에는 약 11분, 보정과 test 평가에는 각각 1분 안팎이 걸립니다. `evaluate_test.py`는 `test_metrics.json`이 이미 있으면 실행되지 않습니다. 공통 데이터 로드·가중치·평가 지표는 `product_purchase/modeling.py`에 있습니다.
 
-서비스에 쓸 모델로 확정하면 `calibration.json`과 그 안의 `model`에 적힌 모델 파일을 `ml/models/product_purchase_v1/`(다음 버전은 `v2/`)로 복사해 커밋합니다.
+서비스에 쓸 모델로 확정하면 `calibration.json`과 그 안의 `model`에 적힌 모델 파일을 새 버전 폴더(`ml/models/product_purchase_v2/` 등)로 복사하고, `metadata.json`을 함께 만들어 커밋합니다. 기존 버전 폴더는 덮어쓰지 않습니다.
+
+#### 모델 버전 반영과 되돌리기
+
+서비스가 쓸 버전은 `ml/models/current.json`이 정합니다. 백엔드는 시작할 때 이 파일을 읽으므로, 바꾼 뒤 서버를 다시 시작하면 반영됩니다. 세션에 기록되는 `model_version`도 이 버전 이름이 됩니다.
+
+```powershell
+.\ml\.venv\Scripts\python.exe ml/product_purchase/release.py list      # 버전 목록과 지금 쓰는 버전
+.\ml\.venv\Scripts\python.exe ml/product_purchase/release.py use v2    # v2로 반영
+.\ml\.venv\Scripts\python.exe ml/product_purchase/release.py use v1    # 되돌리기
+```
+
+모델 파일이 없는 등 쓸 수 없는 폴더로는 바뀌지 않습니다.
 
 ### 6. 조회 로그로 예측하기
 
-서비스 연결에는 `product_purchase/predict.py`의 `PurchasePredictor`를 사용합니다. Git에 포함된 `ml/models/product_purchase_v1/`의 확정 모델(`calibration.json`과 그 안의 `model`에 적힌 모델 파일)을 읽으므로 원본 데이터나 학습 과정 없이 바로 사용할 수 있습니다.
+서비스 연결에는 `product_purchase/predict.py`의 `PurchasePredictor`를 사용합니다. Git에 포함된 확정 모델(`ml/models/current.json`이 가리키는 버전 폴더의 `calibration.json`과 그 안의 `model`에 적힌 모델 파일)을 읽으므로 원본 데이터나 학습 과정 없이 바로 사용할 수 있습니다.
 
 ```python
 from predict import PurchasePredictor
@@ -159,4 +171,4 @@ CSV(`timestamp`, `itemid` 컬럼)로 결과를 바로 확인할 수도 있습니
 .\ml\.venv\Scripts\python.exe -m unittest discover -s ml/product_purchase/tests -t ml/product_purchase -v
 ```
 
-`test_features.py`는 손으로 만든 조회 기록으로 피처 정의를 확인합니다. `test_predict.py`는 Git에 포함된 확정 모델로 추론 결과의 형식과 일관성을 확인합니다.
+`test_features.py`는 손으로 만든 조회 기록으로 피처 정의를 확인합니다. `test_predict.py`는 Git에 포함된 확정 모델로 추론 결과의 형식과 일관성을 확인합니다. `test_release.py`는 임시 폴더로 버전 반영·되돌리기를 확인하고, `current.json`이 쓸 수 있는 버전을 가리키는지 확인합니다.
