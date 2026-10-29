@@ -1,10 +1,12 @@
 """stage.py의 단계 판단 규칙을 확인한다.
 
-규칙 테스트는 손으로 만든 timeline을, 시나리오 테스트는 Git에 포함된 확정 모델을 쓴다.
+규칙 테스트는 손으로 만든 timeline을, 시나리오 테스트는 Git에 포함된 모든 모델 버전을 쓴다.
+모델 버전을 바꿔도(release.py use) 단계 기준값이 그대로 통하는지 확인하기 위해서다.
 """
 import unittest
 
 from predict import PurchasePredictor
+from release import list_versions, release_dir
 from stage import STAGE_THRESHOLDS, judge_stage
 
 
@@ -152,38 +154,51 @@ class JudgeStageRuleTest(unittest.TestCase):
 
 
 class JudgeStageScenarioTest(unittest.TestCase):
-    """실제 모델 확률로 대표적인 쇼핑 흐름이 의도한 단계가 되는지 확인한다."""
+    """실제 모델 확률로 대표적인 쇼핑 흐름이 의도한 단계가 되는지, 모든 모델 버전에서 확인한다."""
 
     @classmethod
     def setUpClass(cls):
-        cls.predictor = PurchasePredictor()
+        cls.predictors = {
+            v["version"]: PurchasePredictor(release_dir(v["version"]))
+            for v in list_versions()
+            if v["problem"] is None
+        }
 
-    def judge(self, items, gap=30 * SECOND):
+    def judge(self, predictor, items, gap=30 * SECOND):
         views = [(k * gap, item) for k, item in enumerate(items)]
-        timeline = self.predictor.timeline(views)
-        return judge_stage(timeline, self.predictor.base_probability)
+        return judge_stage(predictor.timeline(views), predictor.base_probability)
+
+    def each_version(self):
+        for version, predictor in self.predictors.items():
+            with self.subTest(version=version):
+                yield predictor
 
     def test_base_probability(self):
         # 기획서: 처음 한 번 보면 모든 상품이 약 0.55%
-        self.assertAlmostEqual(self.predictor.base_probability, 0.0055, delta=0.001)
+        for predictor in self.each_version():
+            self.assertAlmostEqual(predictor.base_probability, 0.0055, delta=0.001)
 
     def test_all_different_items_is_browsing(self):
-        self.assertEqual(self.judge("ABCDEF")["stage"], "browsing")
+        for predictor in self.each_version():
+            self.assertEqual(self.judge(predictor, "ABCDEF")["stage"], "browsing")
 
     def test_repeated_item_is_decided(self):
-        result = self.judge("ABAAA")
-        self.assertEqual(result["stage"], "decided")
-        self.assertEqual(result["items"], ["A"])
+        for predictor in self.each_version():
+            result = self.judge(predictor, "ABAAA")
+            self.assertEqual(result["stage"], "decided")
+            self.assertEqual(result["items"], ["A"])
 
     def test_alternating_items_is_comparing(self):
-        result = self.judge("ABABAB")
-        self.assertEqual(result["stage"], "comparing")
-        self.assertEqual(set(result["items"]), {"A", "B"})
+        for predictor in self.each_version():
+            result = self.judge(predictor, "ABABAB")
+            self.assertEqual(result["stage"], "comparing")
+            self.assertEqual(set(result["items"]), {"A", "B"})
 
     def test_moving_away_is_leaving(self):
-        result = self.judge("AAABCDEF", gap=20 * SECOND)
-        self.assertEqual(result["stage"], "leaving")
-        self.assertEqual(result["items"], ["A"])
+        for predictor in self.each_version():
+            result = self.judge(predictor, "AAABCDEF", gap=20 * SECOND)
+            self.assertEqual(result["stage"], "leaving")
+            self.assertEqual(result["items"], ["A"])
 
     def test_scenarios_hold_across_click_intervals(self):
         # 상세페이지에 머무는 시간은 사람마다 다르다. 빠르게 눌러도 같은 단계가 나와야 한다.
@@ -193,10 +208,12 @@ class JudgeStageScenarioTest(unittest.TestCase):
             "ABABAB": "comparing",
             "AAABCDEF": "leaving",
         }
-        for seconds in [1, 5, 10, 20, 30]:
-            for items, stage in expected.items():
-                with self.subTest(gap=seconds, items=items):
-                    self.assertEqual(self.judge(items, gap=seconds * SECOND)["stage"], stage)
+        for predictor in self.each_version():
+            for seconds in [1, 5, 10, 20, 30]:
+                for items, stage in expected.items():
+                    with self.subTest(gap=seconds, items=items):
+                        result = self.judge(predictor, items, gap=seconds * SECOND)
+                        self.assertEqual(result["stage"], stage)
 
     def test_no_false_alarm_across_click_intervals(self):
         # 정답 단계를 정하기 애매한 흐름은 "잘못 띄우지 않는지"만 본다.
@@ -209,10 +226,12 @@ class JudgeStageScenarioTest(unittest.TestCase):
             ("ABCDEFGH", "decided"),  # 모두 다른 상품
             ("ABCDEFGH", "comparing"),
         ]
-        for seconds in [1, 5, 10, 20, 30]:
-            for items, stage in not_expected:
-                with self.subTest(gap=seconds, items=items):
-                    self.assertNotEqual(self.judge(items, gap=seconds * SECOND)["stage"], stage)
+        for predictor in self.each_version():
+            for seconds in [1, 5, 10, 20, 30]:
+                for items, stage in not_expected:
+                    with self.subTest(gap=seconds, items=items):
+                        result = self.judge(predictor, items, gap=seconds * SECOND)
+                        self.assertNotEqual(result["stage"], stage)
 
 
 if __name__ == "__main__":

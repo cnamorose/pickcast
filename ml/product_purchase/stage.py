@@ -53,8 +53,10 @@ STAGE_THRESHOLDS = {
     # 이보다 적게 본 상품은 고민 중·살 마음 먹음·떠나려는 중의 대상이 되지 않는다
     "min_item_views": 2,
     # 살 마음 먹음: 1위 lift, 1·2위 ratio, 1위 비중
+    # ratio는 v2(일반 고객 재보정)에서 A B A A A·20초 간격이 1.77배로 1.8에 못 미쳐 1.7로 낮췄다.
+    # valid 검증에서 1.5~2.0 사이는 살 마음 먹음 구매율이 거의 같았다 (docs/ml/stage-validation.md).
     "decided_lift": 2.0,
-    "decided_ratio": 1.8,
+    "decided_ratio": 1.7,
     "decided_share": 0.5,
     # 고민 중: 1·2위가 모두 이 lift 이상이고 ratio가 이보다 작음
     "comparing_lift": 1.8,
