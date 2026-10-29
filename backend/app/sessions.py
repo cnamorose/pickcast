@@ -1,4 +1,5 @@
 import time
+from typing import Literal
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
@@ -14,6 +15,9 @@ router = APIRouter(prefix="/sessions", tags=["sessions"])
 class CreateSessionRequest(BaseModel):
     # 결제 없이 새로 시작할 때 닫을 이전 세션
     previous_session_id: str | None = None
+    # experience: 사람이 한 체험 / simulated: 가상 손님 스크립트
+    # 재학습 데이터에는 experience만 쓴다. 프론트는 보내지 않아도 된다.
+    mode: Literal["experience", "simulated"] = "experience"
 
 
 class ItemRequest(BaseModel):
@@ -55,7 +59,7 @@ def create_session(request: CreateSessionRequest, db: Session = Depends(get_db))
             previous.ended_at = utc_now()
             db.add(previous)
 
-    session = ShoppingSession(model_version=MODEL_VERSION)
+    session = ShoppingSession(model_version=MODEL_VERSION, mode=request.mode)
     db.add(session)
     db.commit()
 

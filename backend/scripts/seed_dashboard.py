@@ -50,7 +50,8 @@ def pick_products(rng, letters):
 
 
 def shop(base_url, rng, pattern, purchase_rate):
-    session_id = call(base_url, "POST", "/sessions", {})["session_id"]
+    # simulated로 만들어 재학습 데이터에 섞이지 않게 한다. 대시보드에는 그대로 나온다.
+    session_id = call(base_url, "POST", "/sessions", {"mode": "simulated"})["session_id"]
     products = pick_products(rng, pattern)
     stage = None
     for letter in pattern:

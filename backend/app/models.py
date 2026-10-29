@@ -15,7 +15,8 @@ class ShoppingSession(SQLModel, table=True):
     __tablename__ = "sessions"
 
     id: str = Field(default_factory=lambda: str(uuid.uuid4()), primary_key=True)
-    # experience: 체험 웹페이지 / service: 실제 쇼핑몰 연동
+    # experience: 체험 웹페이지 / simulated: 가상 손님 스크립트 / service: 실제 쇼핑몰 연동(예정)
+    # 재학습 데이터에는 experience만 쓴다.
     mode: str = Field(default="experience")
     # active: 쇼핑 중 / purchased: 결제 완료 / abandoned: 결제 없이 종료
     status: str = Field(default="active", index=True)

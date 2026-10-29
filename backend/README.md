@@ -101,7 +101,7 @@ docker compose up -d
 
 | API | 설명 |
 |---|---|
-| `POST /sessions` | 세션 생성. `previous_session_id`를 보내면 결제 없이 끝난 이전 세션을 `abandoned`로 닫음 |
+| `POST /sessions` | 세션 생성. `previous_session_id`를 보내면 결제 없이 끝난 이전 세션을 `abandoned`로 닫음. `mode`는 `experience`(기본, 사람의 체험) 또는 `simulated`(가상 손님 스크립트) |
 | `POST /sessions/{id}/views` | 조회 저장 후 이 세션의 조회만으로 예측한 확률과 구매 의도 단계 반환. 단계는 `views.stage`에도 저장 |
 | `POST /sessions/{id}/purchases` | 결제 저장, 세션을 `purchased`로 닫음 |
 | `GET /sessions/{id}/predictions` | 결과 화면용 예측과 확률 변화(`timeline`) |
@@ -195,3 +195,26 @@ python backend/scripts/seed_dashboard.py --shoppers 30
 * `--purchase-rate`: 결제하고 떠나는 손님 비율 (기본 0.3). 나머지는 쇼핑 중으로 남습니다.
 * `--seed`: 같은 손님 구성을 다시 만들 때 지정
 * 30분이 지나면 쇼핑 중에서 빠지므로 다시 실행하면 됩니다. 데이터를 지우려면 `docker compose down -v`
+* 가상 손님은 `mode = simulated`로 저장되어 대시보드에는 나오지만 재학습 데이터에는 쓰이지 않습니다.
+
+## 재학습용 체험 기록 내보내기
+
+DB의 조회·결제 기록을 세션 정보와 함께 CSV로 내보냅니다. 서버 없이 DB만 켜져 있으면 됩니다. ml 쪽에서 이 파일을 정제해 학습 데이터로 바꿉니다 (`ml/README.md`의 "체험 데이터로 학습 데이터 만들기").
+
+```powershell
+python backend/scripts/export_sessions.py                          # ml/data/experience/exports/sessions-<시각>.csv
+python backend/scripts/export_sessions.py --output exports/a.csv   # 저장 위치 지정
+```
+
+| 칸 | 내용 |
+|---|---|
+| `session_id` | 세션 ID |
+| `event` | `view` 또는 `purchase` |
+| `item_id`, `timestamp` | 상품 ID, 시각(ms) |
+| `status` | `purchased` / `abandoned` / `active` |
+| `kind` | 결제 종류 (`virtual`: 체험의 가상 선택). 조회는 빈칸 |
+| `mode` | `experience` / `simulated` |
+
+* 모든 세션을 내보내고, 무엇을 학습에 쓸지는 ml 쪽 정제 기준이 정합니다.
+* 결제 없이 탭을 닫은 세션은 DB에서 계속 `active`로 남습니다. 마지막 기록 후 60분(`EXPIRE_AFTER_MINUTES`)이 지난 `active` 세션은 내보낼 때 `abandoned`로 봅니다. DB 값은 바꾸지 않습니다.
+* 기본 저장 위치(`ml/data/`)는 Git에 올라가지 않습니다.
