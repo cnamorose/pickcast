@@ -16,7 +16,6 @@ v1은 valid 전체 고객으로 보정했는데, 행의 대부분을 조회 100�
     python ml/product_purchase/recalibrate.py
 """
 import json
-import shutil
 import time
 from datetime import date
 
@@ -29,7 +28,7 @@ from events import output_dir
 from features import FEATURES
 from modeling import apply_calibration, best_f1_threshold, load_split
 from predict import PurchasePredictor
-from release import MODELS_DIR, release_dir
+from release import MODELS_DIR, register_version, release_dir
 from stage import STAGE_THRESHOLDS
 from validate_stage import judge_all, points_from_frame, summarize
 
@@ -97,22 +96,8 @@ def evaluate_version(frame, raw, calibration, predictor):
 
 
 def write_version(calibration, threshold, report):
-    directory = MODELS_DIR / NEW_VERSION
-    base_dir = release_dir(BASE_VERSION)
-    base_calibration = json.loads((base_dir / "calibration.json").read_text(encoding="utf-8"))
-    directory.mkdir()
-    shutil.copy(base_dir / f"{base_calibration['model']}.txt", directory)
-    (directory / "calibration.json").write_text(
-        json.dumps(
-            {"model": base_calibration["model"], **calibration, "threshold": threshold},
-            ensure_ascii=False,
-            indent=2,
-        ),
-        encoding="utf-8",
-    )
     b = report["v2"]["probability"]
     metadata = {
-        "version": NEW_VERSION,
         "created": date.today().isoformat(),
         "description": "v1 모델을 RetailRocket valid 일반 고객 기준으로 다시 보정",
         "based_on": BASE_VERSION,
@@ -129,10 +114,7 @@ def write_version(calibration, threshold, report):
         },
         "notes": "조회 100회 이상 고객에게는 확률이 낮게 나올 수 있다. docs/ml/recalibration-v2.md 참고",
     }
-    (directory / "metadata.json").write_text(
-        json.dumps(metadata, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
-    )
-    return directory
+    return register_version(NEW_VERSION, BASE_VERSION, calibration, threshold, metadata)
 
 
 def main():
