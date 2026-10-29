@@ -14,6 +14,8 @@
 """
 import argparse
 import json
+import re
+import shutil
 from pathlib import Path
 
 from events import ml_dir
@@ -67,6 +69,39 @@ def list_versions(models_dir=MODELS_DIR):
             }
         )
     return versions
+
+
+def next_version(models_dir=MODELS_DIR):
+    """다음 버전 이름. product_purchase_v2까지 있으면 product_purchase_v3."""
+    numbers = [
+        int(match.group(1))
+        for directory in Path(models_dir).glob(f"{VERSION_PREFIX}v*")
+        if (match := re.fullmatch(rf"{VERSION_PREFIX}v(\d+)", directory.name))
+    ]
+    return f"{VERSION_PREFIX}v{max(numbers, default=0) + 1}"
+
+
+def register_version(version, base_version, calibration, threshold, metadata, models_dir=MODELS_DIR):
+    """기존 버전의 모델 파일에 새 보정을 붙여 새 버전 폴더를 만든다. 이미 있으면 덮어쓰지 않는다.
+
+    서비스 반영(current.json)은 하지 않는다. 반영은 use_version으로 따로 한다.
+    """
+    directory = Path(models_dir) / normalize(version)
+    if directory.exists():
+        raise FileExistsError(f"이미 있는 버전입니다: {directory}")
+    base_dir = release_dir(base_version, models_dir)
+    model = json.loads((base_dir / "calibration.json").read_text(encoding="utf-8"))["model"]
+    directory.mkdir()
+    shutil.copy(base_dir / f"{model}.txt", directory)
+    (directory / "calibration.json").write_text(
+        json.dumps({"model": model, **calibration, "threshold": threshold}, ensure_ascii=False, indent=2),
+        encoding="utf-8",
+    )
+    (directory / "metadata.json").write_text(
+        json.dumps({"version": directory.name, **metadata}, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
+    return directory
 
 
 def use_version(version, models_dir=MODELS_DIR):

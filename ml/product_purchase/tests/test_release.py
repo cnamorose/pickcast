@@ -9,7 +9,9 @@ from release import (
     MODELS_DIR,
     current_version,
     list_versions,
+    next_version,
     normalize,
+    register_version,
     release_dir,
     use_version,
 )
@@ -58,6 +60,24 @@ class ReleaseTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             use_version("v3", self.models_dir)
         self.assertEqual(current_version(self.models_dir), "product_purchase_v1")
+
+    def test_next_version_number(self):
+        self.assertEqual(next_version(self.models_dir), "product_purchase_v3")
+
+    def test_register_copies_model_and_keeps_current(self):
+        calibration = {"method": "isotonic_smooth", "x_logit": [0.0], "y": [0.01]}
+        directory = register_version("v3", "v2", calibration, 0.04, {"created": "2026-10-29"}, self.models_dir)
+        self.assertTrue((directory / "m.txt").exists())
+        saved = json.loads((directory / "calibration.json").read_text(encoding="utf-8"))
+        self.assertEqual(saved["model"], "m")
+        self.assertEqual(saved["threshold"], 0.04)
+        self.assertEqual(json.loads((directory / "metadata.json").read_text(encoding="utf-8"))["version"],
+                         "product_purchase_v3")
+        self.assertEqual(current_version(self.models_dir), "product_purchase_v1")
+
+    def test_register_does_not_overwrite(self):
+        with self.assertRaises(FileExistsError):
+            register_version("v2", "v1", {}, 0.04, {}, self.models_dir)
 
     def test_list_marks_broken_versions(self):
         make_version(self.models_dir, "product_purchase_v3", with_model=False)

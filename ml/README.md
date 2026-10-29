@@ -197,7 +197,30 @@ CSV(`timestamp`, `itemid` 컬럼)로 결과를 바로 확인할 수도 있습니
 | `auto_release` | 등록 기준을 통과한 새 버전을 서비스에 자동 반영할지. `false`면 등록만 하고 반영은 `release.py use`로 | `false` |
 | `min_sessions` | 학습에 쓸 수 있는 체험 세션이 이만큼 쌓여야 재보정을 실행 | `50` |
 
-배포 전에는 모두 꺼 둡니다. 배포 후 체험 데이터가 쌓이면 `retrain_enabled`를 켭니다. 스위치는 자동 실행(파이프라인)이 확인하며, 위의 학습 데이터 만들기나 직접 돌리는 `recalibrate.py`는 스위치와 상관없이 실행됩니다.
+배포 전에는 모두 꺼 둡니다. 배포 후 체험 데이터가 쌓이면 `retrain_enabled`를 켭니다. 스위치는 아래 파이프라인이 확인하며, 위의 학습 데이터 만들기나 직접 돌리는 `recalibrate.py`는 스위치와 상관없이 실행됩니다.
+
+#### 재학습 파이프라인
+
+백엔드가 내보낸 기록 파일 하나로 아래 단계를 한 번에 실행합니다. 어디서 멈췄는지와 숫자는 데이터셋 폴더의 `pipeline_report.json`에 남습니다.
+
+```powershell
+.\ml\.venv\Scripts\python.exe ml/product_purchase/pipeline.py --build-reference              # 처음 한 번 (원본 데이터가 있는 곳에서)
+.\ml\.venv\Scripts\python.exe ml/product_purchase/pipeline.py <기록 파일>                     # 스위치에 따라 실행
+.\ml\.venv\Scripts\python.exe ml/product_purchase/pipeline.py <기록 파일> --dry-run           # 스위치와 상관없이 평가까지만
+```
+
+| 단계 | 내용 | 멈추는 경우 |
+| --- | --- | --- |
+| ① 스위치 | `retrain_enabled` 확인 | 꺼져 있음 (`--dry-run`은 건너뜀) |
+| ② 학습 데이터 | 기록 파일 → 정제 → 학습 행 (`experience.py`) | |
+| ③ 양 확인 | 학습용(train) 체험 세션 수 | `min_sessions` 미만 |
+| ④ 재보정 | 지금 서비스 버전의 모델은 그대로 두고 보정만 다시 맞춤. RetailRocket 일반 고객 A 절반 + 체험 학습용, 체험 행 가중치 10 | |
+| ⑤ 평가 | 체험 평가용(20%)에서 Log loss가 낮아지고 평균 예측과 실제의 차이가 커지지 않아야 함. RetailRocket B 절반에서 Log loss가 1% 넘게 나빠지지 않아야 함. 단계 판단 대표 흐름(`stage.STAGE_SCENARIOS`)이 모든 클릭 간격에서 의도한 단계로 나와야 함 | 기준 미통과 |
+| ⑥ 등록 | 다음 번호의 버전 폴더 생성 (`release.py`의 `register_version`) | `--dry-run`이면 여기서 멈춤 |
+| ⑦ 반영 | `auto_release`가 켜져 있으면 `current.json` 변경. 꺼져 있으면 `release.py use` 명령만 안내 | |
+
+- RetailRocket 원본 학습 데이터는 배포 서버에 없으므로, 보정·비교에 쓰는 valid 일반 고객 행만 뽑은 참조 파일(`ml/data/product_purchase/pipeline_reference.parquet`, 약 15MB)을 `--build-reference`로 한 번 만들어 서버에 함께 둡니다. 고객을 A·B로 나누는 방법은 v2와 같습니다.
+- 반영 후에는 백엔드를 재시작해야 새 버전이 적용됩니다.
 
 ### 9. 테스트
 
@@ -205,4 +228,4 @@ CSV(`timestamp`, `itemid` 컬럼)로 결과를 바로 확인할 수도 있습니
 .\ml\.venv\Scripts\python.exe -m unittest discover -s ml/product_purchase/tests -t ml/product_purchase -v
 ```
 
-`test_features.py`는 손으로 만든 조회 기록으로 피처 정의를 확인합니다. `test_predict.py`는 Git에 포함된 확정 모델로 추론 결과의 형식과 일관성을 확인합니다. `test_release.py`는 임시 폴더로 버전 반영·되돌리기를 확인하고, `current.json`이 쓸 수 있는 버전을 가리키는지 확인합니다. `test_stage.py`의 시나리오 테스트는 `ml/models/`에 등록된 모든 버전으로 단계 판단을 확인하므로, 새 버전을 등록하면 단계 기준값이 그 버전에서도 통하는지 바로 드러납니다. `test_recalibrate.py`는 재보정의 등록 기준을 확인합니다.
+`test_features.py`는 손으로 만든 조회 기록으로 피처 정의를 확인합니다. `test_predict.py`는 Git에 포함된 확정 모델로 추론 결과의 형식과 일관성을 확인합니다. `test_release.py`는 임시 폴더로 버전 반영·되돌리기를 확인하고, `current.json`이 쓸 수 있는 버전을 가리키는지 확인합니다. `test_stage.py`의 시나리오 테스트는 `ml/models/`에 등록된 모든 버전으로 단계 판단을 확인하므로, 새 버전을 등록하면 단계 기준값이 그 버전에서도 통하는지 바로 드러납니다. `test_recalibrate.py`는 재보정의 등록 기준을 확인합니다. `test_experience.py`는 체험 기록 정제·학습 행·스위치를, `test_pipeline.py`는 임시 폴더와 가짜 체험 기록으로 파이프라인의 단계별 멈춤·등록·반영을 확인합니다.

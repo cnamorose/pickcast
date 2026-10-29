@@ -7,7 +7,13 @@ import unittest
 
 from predict import PurchasePredictor
 from release import list_versions, release_dir
-from stage import STAGE_THRESHOLDS, judge_stage
+from stage import (
+    SCENARIO_GAPS_SECONDS,
+    STAGE_SCENARIOS,
+    STAGE_THRESHOLDS,
+    judge_stage,
+    scenario_mismatches,
+)
 
 
 BASE = 0.01
@@ -202,18 +208,23 @@ class JudgeStageScenarioTest(unittest.TestCase):
 
     def test_scenarios_hold_across_click_intervals(self):
         # 상세페이지에 머무는 시간은 사람마다 다르다. 빠르게 눌러도 같은 단계가 나와야 한다.
-        expected = {
-            "ABCDEF": "browsing",
-            "ABAAA": "decided",
-            "ABABAB": "comparing",
-            "AAABCDEF": "leaving",
-        }
         for predictor in self.each_version():
-            for seconds in [1, 5, 10, 20, 30]:
-                for items, stage in expected.items():
+            for seconds in SCENARIO_GAPS_SECONDS:
+                for items, stage in STAGE_SCENARIOS.items():
                     with self.subTest(gap=seconds, items=items):
                         result = self.judge(predictor, items, gap=seconds * SECOND)
                         self.assertEqual(result["stage"], stage)
+
+    def test_scenario_mismatches_lists_nothing_for_registered_versions(self):
+        for predictor in self.each_version():
+            self.assertEqual(scenario_mismatches(predictor), [])
+
+    def test_scenario_mismatches_catches_strict_threshold(self):
+        predictor = next(iter(self.predictors.values()))
+        strict = {**STAGE_THRESHOLDS, "decided_ratio": 100.0}
+        mismatches = scenario_mismatches(predictor, strict)
+        self.assertTrue(mismatches)
+        self.assertTrue(all(items == "ABAAA" for items, _, _ in mismatches))
 
     def test_no_false_alarm_across_click_intervals(self):
         # 정답 단계를 정하기 애매한 흐름은 "잘못 띄우지 않는지"만 본다.

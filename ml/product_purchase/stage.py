@@ -70,6 +70,30 @@ STAGE_THRESHOLDS = {
 }
 
 
+# 모델 버전이 바뀌어도 의도한 단계가 나와야 하는 대표 흐름. 클릭 간격(초)마다 확인한다.
+# 테스트(tests/test_stage.py)와 재학습 파이프라인의 등록 기준(pipeline.py)이 함께 쓴다.
+STAGE_SCENARIOS = {
+    "ABCDEF": "browsing",  # 여러 상품을 한 번씩 둘러봄
+    "ABAAA": "decided",  # 한 상품을 반복해서 봄
+    "ABABAB": "comparing",  # 두 상품을 번갈아 봄
+    "AAABCDEF": "leaving",  # 보던 상품에서 멀어짐
+}
+SCENARIO_GAPS_SECONDS = [1, 5, 10, 20, 30]
+
+
+def scenario_mismatches(predictor, thresholds=None):
+    """대표 흐름 중 의도한 단계가 나오지 않는 (흐름, 간격, 나온 단계) 목록."""
+    thresholds = thresholds or STAGE_THRESHOLDS
+    mismatches = []
+    for items, expected in STAGE_SCENARIOS.items():
+        for seconds in SCENARIO_GAPS_SECONDS:
+            views = [(k * seconds * 1000, item) for k, item in enumerate(items)]
+            stage = judge_stage(predictor.timeline(views), predictor.base_probability, thresholds)["stage"]
+            if stage != expected:
+                mismatches.append((items, seconds, stage))
+    return mismatches
+
+
 def _share(probabilities, item):
     total = sum(probabilities.values())
     return probabilities[item] / total if total > 0 else 0.0
