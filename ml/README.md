@@ -134,7 +134,18 @@ CSV(`timestamp`, `itemid` 컬럼)로 결과를 바로 확인할 수도 있습니
 .\ml\.venv\Scripts\python.exe ml/product_purchase/predict.py log.csv
 ```
 
-### 7. 테스트
+### 7. 구매 의도 단계 검증
+
+사용자 맞춤 화면의 단계 판단(`product_purchase/stage.py`)이 실제 구매와 연결되는지 valid로 확인합니다. 학습 데이터가 있어야 하며, 결과는 [docs/ml/stage-validation.md](../docs/ml/stage-validation.md)에 정리했습니다.
+
+```powershell
+.\ml\.venv\Scripts\python.exe ml/product_purchase/validate_stage.py          # 지금 기준값 (약 15초)
+.\ml\.venv\Scripts\python.exe ml/product_purchase/validate_stage.py --grid   # 기준값 108개 조합 비교 (약 11분)
+```
+
+결과는 `ml/data/product_purchase/stage_validation.json`(그리드는 `stage_validation_grid.json`)에 저장됩니다.
+
+### 8. 테스트
 
 ```powershell
 .\ml\.venv\Scripts\python.exe -m unittest discover -s ml/product_purchase/tests -t ml/product_purchase -v
