@@ -173,7 +173,33 @@ CSV(`timestamp`, `itemid` 컬럼)로 결과를 바로 확인할 수도 있습니
 
 `ml/data/product_purchase/models/extension_test_metrics.json`이 이미 있으면 실행되지 않습니다.
 
-### 8. 테스트
+### 8. 체험 데이터로 학습 데이터 만들기
+
+배치 재학습의 데이터 준비 단계입니다. 백엔드가 DB에서 내보낸 체험 기록 파일(CSV 또는 Parquet)을 학습 데이터로 바꿉니다. ml 코드는 DB에 직접 접속하지 않습니다.
+
+```powershell
+.\ml\.venv\Scripts\python.exe ml/product_purchase/experience.py sessions.csv
+```
+
+| 단계 | 내용 |
+| --- | --- |
+| 입력 칸 | `session_id`, `event`(view/purchase), `item_id`, `timestamp`(ms), `status`, `kind`, `mode` |
+| 정제 | 쇼핑 중인 세션, `mode`가 `experience`가 아닌 세션(가상 손님 등), 조회 100회 이상, 조회 간격 중앙값 1초 미만(조회 3회 이상일 때), 같은 기록 중복을 뺍니다 |
+| 학습 행 | RetailRocket 학습 데이터와 같은 규칙(조회 시점 × 후보 상품, 피처 8개, 그 뒤 결제 여부). 고객 300명의 학습 행 15,855개를 기존 학습 데이터와 비교해 모두 같음을 확인했습니다 |
+| 분리 | 세션 ID 해시로 학습(train) 80%, 평가(eval) 20% |
+| 저장 | `ml/data/experience/<날짜>/training_rows.parquet`, `report.json`(뺀 세션 수와 이유). 같은 버전은 덮어쓰지 않습니다 |
+
+#### 재학습 스위치 (`ml/pipeline_config.json`)
+
+| 항목 | 뜻 | 기본 |
+| --- | --- | --- |
+| `retrain_enabled` | 체험 데이터로 재보정·재학습을 자동으로 돌릴지 | `false` |
+| `auto_release` | 등록 기준을 통과한 새 버전을 서비스에 자동 반영할지. `false`면 등록만 하고 반영은 `release.py use`로 | `false` |
+| `min_sessions` | 학습에 쓸 수 있는 체험 세션이 이만큼 쌓여야 재보정을 실행 | `50` |
+
+배포 전에는 모두 꺼 둡니다. 배포 후 체험 데이터가 쌓이면 `retrain_enabled`를 켭니다. 스위치는 자동 실행(파이프라인)이 확인하며, 위의 학습 데이터 만들기나 직접 돌리는 `recalibrate.py`는 스위치와 상관없이 실행됩니다.
+
+### 9. 테스트
 
 ```powershell
 .\ml\.venv\Scripts\python.exe -m unittest discover -s ml/product_purchase/tests -t ml/product_purchase -v

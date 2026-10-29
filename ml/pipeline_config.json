@@ -1,0 +1,5 @@
+{
+  "retrain_enabled": false,
+  "auto_release": false,
+  "min_sessions": 50
+}
