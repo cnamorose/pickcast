@@ -45,9 +45,12 @@ GRID = {
 }
 
 
-def load_points():
-    """valid의 일반 고객 행에 확률을 붙이고, 조회 시점(고객, 시각) 경계를 구한다."""
-    frame = load_split("valid")
+def load_points(split="valid"):
+    """일반 고객 행에 확률을 붙이고, 조회 시점(고객, 시각) 경계를 구한다.
+
+    test 평가(evaluate_extension_test.py)도 같은 방법을 쓰도록 구간을 받는다.
+    """
+    frame = load_split(split)
     frame = frame.loc[frame["heavy_user"] == 0].reset_index(drop=True)
 
     predictor = PurchasePredictor()
@@ -61,6 +64,7 @@ def load_points():
     )
     return {
         "visitor": visitor,
+        "cutoff": cutoff,
         "item": frame["itemid"].to_numpy(),
         "viewed_now": frame["seconds_since_last_view"].to_numpy() == 0,
         "label": frame["label"].to_numpy(),
