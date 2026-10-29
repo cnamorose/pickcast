@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
 
 from . import models  # noqa: F401  테이블 정의를 등록
+from .dashboard_api import router as dashboard_router
 from .db import create_tables, engine
 from .sessions import router as sessions_router
 
@@ -20,6 +21,7 @@ app.add_middleware(
 create_tables()
 
 app.include_router(sessions_router)
+app.include_router(dashboard_router)
 
 
 @app.get("/")
