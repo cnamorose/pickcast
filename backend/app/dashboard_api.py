@@ -5,6 +5,7 @@ from sqlalchemy import func
 from sqlmodel import Session, select
 
 from .db import get_db
+from .insights import dashboard_insights
 from .inventory import STOCK
 from .ml import compare_pairs, count_stages, forecast_sales, judge_stage, predictor
 from .models import Purchase, ShoppingSession, View, utc_now
@@ -65,6 +66,7 @@ def get_dashboard(db: Session = Depends(get_db)):
     ]
     # 1명 이상 살 확률이 상품 간 차이를 가장 잘 보여줘서 그 순서로 정렬한다.
     products.sort(key=lambda p: (-p["at_least_one"], -p["purchased"], p["item_id"]))
+    pairs = compare_pairs(stage_results, limit=COMPARE_PAIRS_LIMIT)
 
     return {
         "generated_at": utc_now().isoformat(),
@@ -72,7 +74,6 @@ def get_dashboard(db: Session = Depends(get_db)):
         "active_window_minutes": ACTIVE_WINDOW_MINUTES,
         "products": products,
         "stages": count_stages(result["stage"] for result in stage_results),
-        "compare_pairs": compare_pairs(stage_results, limit=COMPARE_PAIRS_LIMIT),
-        # 규칙 기반 인사이트 문장은 다음 작업에서 채운다
-        "insights": [],
+        "compare_pairs": pairs,
+        "insights": dashboard_insights(len(session_ids), products, stage_results, pairs),
     }

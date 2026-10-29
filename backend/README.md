@@ -72,6 +72,14 @@ python -m uvicorn backend.app.main:app --reload
 * API 문서: `http://127.0.0.1:8000/docs`
 * 상태 확인: `http://127.0.0.1:8000/health` → `"db": "connected"`가 나오면 DB 연결 정상
 
+### 6. 테스트
+
+DB나 서버 없이 실행됩니다.
+
+```powershell
+python -m unittest discover -s backend/tests -t . -v
+```
+
 ## DB 확인
 
 웹 화면(Adminer): `http://localhost:8080`
@@ -150,10 +158,31 @@ docker compose up -d
 | `products[].stock` | 가상 재고 (`backend/app/inventory.py`) | 고정값 |
 | `stages` | 단계별 세션 수 | 쇼핑 중 세션 |
 | `compare_pairs` | 고민 중 세션이 비교한 상품 쌍 (상위 10개) | 쇼핑 중 세션 |
-| `insights` | 규칙 기반 안내 문장 (추가 예정) | |
+| `insights` | 규칙 기반 안내 문장 (아래 참고) | |
 
 * 상품 48개가 모두 나오며, 아무도 안 본 상품은 0으로 채웁니다. 상품 이름·사진·가격은 프론트가 `item_id`로 `products.js`에서 찾습니다.
 * 예상 구매 수는 기간 단위가 아니라 "지금 보는 고객 중 결국 몇 명이 살지"입니다. 확률이 작아 대부분 0.1개 미만이므로 화면에서는 `at_least_one`이 읽기 쉽습니다.
+
+#### 인사이트 (`insights`)
+
+대시보드 숫자 중 확인해볼 만한 것을 규칙으로 골라 문장으로 만듭니다 (`backend/app/insights.py`). 원인(가격, 사진 등)은 데이터에 없어서 추측하지 않고 "확인해볼 점"으로만 씁니다.
+
+```json
+{ "type": "comparing_pair", "items": ["DRESS-05", "DRESS-06"],
+  "message": "DRESS-05과(와) DRESS-06을(를) 함께 고민 중인 고객이 3명입니다. ..." }
+```
+
+| 순서 | `type` | 조건 |
+|---|---|---|
+| 1 | `low_stock` | 보는 고객이 있는데 품절이거나 남은 재고(재고 − 결제 수)가 1개 이하 |
+| 2 | `comparing_pair` | 같은 상품 쌍을 고민 중인 세션 2개 이상 |
+| 3 | `weak_intent` | 본 고객 3명 이상인데 살 마음 먹은 고객 없음 |
+| 4 | `leaving` | 같은 상품에서 멀어지는 세션 2개 이상 |
+
+* 종류별 최대 2개, 전체 최대 5개입니다.
+* 쇼핑 중 고객이 5명 미만이면 `too_few_sessions` 안내와 재고 안내만 나옵니다.
+* 기준 숫자는 `INSIGHT_THRESHOLDS`에 모여 있습니다.
+* 프론트는 `items`로 상품 이름을 찾아 카드에 쓸 수 있습니다.
 
 ### 대시보드 확인용 가상 손님
 
