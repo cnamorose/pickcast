@@ -48,3 +48,9 @@ export function fetchSessionPrediction(sessionId) {
   return request(`/sessions/${sessionId}/predictions`);
   // { prediction: {...}, timeline: [...], feature_labels: {...} }
 }
+
+// 판매자 대시보드. 지금 쇼핑 중인 세션의 상품별 예상 구매, 단계별 인원, 자주 비교되는 상품 쌍
+export function fetchDashboard() {
+  return request("/dashboard");
+  // { generated_at, active_sessions, active_window_minutes, products: [...], stages, compare_pairs, insights }
+}

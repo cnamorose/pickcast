@@ -8,7 +8,7 @@ import { formatPrice } from "../utils/format";
 export default function ProductDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { logView } = useShopping();
+  const { logView, stage, wishlist, toggleWishlist } = useShopping();
 
   const product = getProduct(id);
   const related = getRelated(id);
@@ -34,6 +34,10 @@ export default function ProductDetailPage() {
   }
 
   const categoryLabel = CATEGORY_LABELS[product.category];
+  // 살 마음 먹음(decided) 단계에서 1위 상품을 보고 있으면: 구매 버튼과 배송 정보를 강조하고
+  // 추천(같은 카테고리 상품)을 꺼서 결정을 방해하지 않는다.
+  const decided = stage?.stage === "decided" && stage.items.includes(product.id);
+  const saved = wishlist.includes(product.id);
 
   return (
     <div className="page">
@@ -62,7 +66,7 @@ export default function ProductDetailPage() {
               <dt>상품 정보</dt>
               <dd>{product.meta}</dd>
             </div>
-            <div>
+            <div className={decided ? "info-highlight" : undefined}>
               <dt>배송</dt>
               <dd>무료배송 · 1~2일 이내 출고</dd>
             </div>
@@ -72,13 +76,32 @@ export default function ProductDetailPage() {
             </div>
           </dl>
 
-          <button className="btn btn-black btn-block" onClick={() => navigate(`/checkout/${product.id}`)}>
-            구매하기
-          </button>
+          {decided && (
+            <div className="decided-note">
+              <b>🚚 지금 주문하면 1~2일 안에 출고돼요</b>
+              <span>무료배송 · 수령 후 7일 이내 교환/반품 가능</span>
+            </div>
+          )}
+
+          <div className="buy-row">
+            <button
+              className={`btn btn-black btn-block ${decided ? "btn-emphasis" : ""}`}
+              onClick={() => navigate(`/checkout/${product.id}`)}
+            >
+              {decided ? "지금 구매하기" : "구매하기"}
+            </button>
+            <button
+              className={`btn btn-wish ${saved ? "btn-wish-on" : ""}`}
+              onClick={() => toggleWishlist(product.id)}
+              aria-label={saved ? "찜 취소" : "찜하기"}
+            >
+              {saved ? "♥" : "♡"}
+            </button>
+          </div>
         </div>
       </div>
 
-      {related.length > 0 && (
+      {!decided && related.length > 0 && (
         <section className="related">
           <h3 className="section-title">같은 카테고리 상품</h3>
           <div className="grid">

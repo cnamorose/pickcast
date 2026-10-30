@@ -7,6 +7,7 @@ import CheckoutPage from "./pages/CheckoutPage";
 import WaitingPage from "./pages/WaitingPage";
 import ResultPage from "./pages/ResultPage";
 import PeakPage from "./peak/PeakPage";
+import StageModal from "./components/StageModal";
 import "./styles.css";
 
 function Layout() {
@@ -17,6 +18,8 @@ function Layout() {
   // 상품 목록 버튼은 쇼핑 중(상세·결제)에만 보여준다.
   // 결제 후에는 결과 화면의 "처음으로"로만 나가야 새 세션으로 시작된다.
   const showListButton = pathname.startsWith("/products/") || pathname.startsWith("/checkout/");
+  // 단계별 모달은 쇼핑 중(목록·상세)에만 띄운다. 결제·결과 화면에서는 띄우지 않는다.
+  const showStageModal = pathname === "/main" || pathname.startsWith("/products/");
 
   return (
     <>
@@ -40,6 +43,7 @@ function Layout() {
         <Route path="/result" element={<ResultPage />} />
         <Route path="/peak" element={<PeakPage />} />
       </Routes>
+      {showStageModal && <StageModal />}
     </>
   );
 }
