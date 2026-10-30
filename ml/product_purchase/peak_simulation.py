@@ -24,13 +24,19 @@
 
 α는 valid로 정하고 test로 한 번 확인한다.
 
-    python ml/product_purchase/peak_simulation.py
+    python ml/product_purchase/peak_simulation.py                   # valid로 α 선택, test 확인
+    python ml/product_purchase/peak_simulation.py --replay-assets   # 재생 화면용 파일 (test 재계산 없음)
+
+재생 화면(백엔드 재생 API)은 replay()로 시간대 하나를 한 방식으로 돌려 도착·처리·이탈 사건과
+초마다의 현황을 받는다.
 """
+import argparse
 import heapq
 import json
 import math
 from collections import deque
 from dataclasses import dataclass
+from datetime import datetime, timezone
 
 import numpy as np
 
@@ -54,6 +60,9 @@ MAX_EXTRA_LOW_LEAVE = 0.05
 REPORT_PATH = output_dir / "peak_simulation.json"
 # 결과 API(백엔드)가 읽는 요약. 숫자만 담긴 작은 파일이라 Git으로 관리한다.
 RESULTS_PATH = ml_dir / "results" / "peak_simulation.json"
+# 재생 화면용 시간대. test의 붐비는 시간대 중 구매 고객이 많은 REPLAY_WINDOWS개의 요청만 담는다.
+REPLAY_WINDOWS_PATH = ml_dir / "results" / "peak_replay_windows.json"
+REPLAY_WINDOWS = 5
 
 
 @dataclass
@@ -71,9 +80,18 @@ def priority_key(request, policy, alpha):
     return -(request.score - alpha * request.arrival)
 
 
-def simulate(requests, capacity_per_second, policy, alpha=0.0, timeout=TIMEOUT_SECONDS):
-    """요청을 1초 단위로 처리한다. 고객별로 떠났는지와 처리된 요청의 대기 시간을 돌려준다."""
+def simulate(requests, capacity_per_second, policy, alpha=0.0, timeout=TIMEOUT_SECONDS, trace=None):
+    """요청을 1초 단위로 처리한다. 고객별로 떠났는지와 처리된 요청의 대기 시간을 돌려준다.
+
+    trace에 목록을 넘기면 재생 화면용 기록을 남긴다.
+      사건: arrive(도착), ignored(이미 떠난 고객의 요청), left(대기 초과로 떠남), served(처리)
+      초마다 현황: tick 사건에 대기열 길이, 누적 처리 수, 누적 이탈 고객 수
+    """
     requests = sorted(requests, key=lambda r: r.arrival)
+
+    def record(event, **fields):
+        if trace is not None:
+            trace.append({"event": event, **fields})
     left_users = set()
     waits = []  # (score, wait)
     heap, by_arrival = [], deque()
@@ -87,9 +105,12 @@ def simulate(requests, capacity_per_second, policy, alpha=0.0, timeout=TIMEOUT_S
             request = requests[index]
             if request.user in left_users:
                 done.add(index)
+                record("ignored", t=request.arrival, request=index, user=request.user)
             else:
                 heapq.heappush(heap, (priority_key(request, policy, alpha), index))
                 by_arrival.append(index)
+                record("arrive", t=request.arrival, request=index, user=request.user,
+                       score=request.score, buyer=request.buyer)
             index += 1
 
         # 너무 오래 기다린 요청의 고객은 떠난다
@@ -97,7 +118,9 @@ def simulate(requests, capacity_per_second, policy, alpha=0.0, timeout=TIMEOUT_S
             k = by_arrival.popleft()
             if k not in done:
                 done.add(k)
-                left_users.add(requests[k].user)
+                if requests[k].user not in left_users:
+                    left_users.add(requests[k].user)
+                    record("left", t=tick, request=k, user=requests[k].user, buyer=requests[k].buyer)
         for k in list(by_arrival):
             if k not in done and requests[k].user in left_users:
                 done.add(k)
@@ -110,11 +133,41 @@ def simulate(requests, capacity_per_second, policy, alpha=0.0, timeout=TIMEOUT_S
             done.add(k)
             tokens -= 1
             waits.append((requests[k].score, tick - requests[k].arrival))
+            record("served", t=tick, request=k, user=requests[k].user,
+                   wait=tick - requests[k].arrival)
         if not heap:
             tokens = min(tokens, capacity_per_second)  # 쉬는 동안 처리량을 쌓아 두지 않는다
+        if trace is not None:
+            record("tick", t=tick, queue=sum(1 for k in by_arrival if k not in done),
+                   served=len(waits), left=len(left_users))
         if index >= len(requests) and not heap:
             break
     return left_users, waits
+
+
+def replay(requests, policy, alpha=0.0, overload=OVERLOAD, timeout=TIMEOUT_SECONDS):
+    """시간대 하나를 한 방식으로 재생해 화면용 기록과 요약을 돌려준다 (재생 API용).
+
+    서버 처리량은 평가와 같게 (평균 도착 수 ÷ overload)로 둔다.
+    """
+    capacity = len(requests) / COMPRESSED_SECONDS / overload
+    trace = []
+    left, waits = simulate(requests, capacity, policy, alpha, timeout, trace)
+    buyers = {r.user for r in requests if r.buyer}
+    users = {r.user for r in requests}
+    return {
+        "policy": policy,
+        "alpha": alpha,
+        "capacity_per_second": capacity,
+        "events": trace,
+        "summary": {
+            "users": len(users),
+            "buyers": len(buyers),
+            "protected_buyers": len(buyers - left),
+            "left_users": len(left),
+            "served_requests": len(waits),
+        },
+    }
 
 
 def window_requests(points, start, end):
@@ -212,6 +265,16 @@ def choose_alpha(valid):
 
 
 def main():
+    parser = argparse.ArgumentParser(description="피크타임 우선 처리 시뮬레이션")
+    parser.add_argument("--replay-assets", action="store_true",
+                        help="재생 화면용 시간대 파일을 만들고 요약에 test α 곡선을 더한다")
+    args = parser.parse_args()
+    if args.replay_assets:
+        path, count = export_replay_assets()
+        print(f"재생용 시간대 {count}개 저장: {path}")
+        print(f"요약에 test α 곡선 추가: {RESULTS_PATH}")
+        return
+
     if RESULTS_PATH.exists():
         raise SystemExit(f"이미 test까지 평가했습니다: {RESULTS_PATH}")
     predictor = PurchasePredictor()
@@ -256,6 +319,64 @@ def main():
     RESULTS_PATH.parent.mkdir(parents=True, exist_ok=True)
     RESULTS_PATH.write_text(json.dumps(summary, ensure_ascii=False, indent=2), encoding="utf-8")
     print(f"\n결과 저장: {REPORT_PATH}\n요약 저장: {RESULTS_PATH}")
+
+
+def export_replay_assets(predictor=None):
+    """재생 화면용 시간대 파일을 만들고, 요약에 test α 곡선을 더한다.
+
+    test는 main()에서 이미 한 번 평가했으므로 다시 계산하지 않는다. α 곡선은 저장된 전체 결과
+    (REPORT_PATH)에서 옮겨 담고, 시간대 파일은 요청 목록(확률, 구매 여부)만 저장한다.
+    고객 번호는 시간대마다 0부터 다시 매긴다.
+    """
+    report = json.loads(REPORT_PATH.read_text(encoding="utf-8"))
+    summary = json.loads(RESULTS_PATH.read_text(encoding="utf-8"))
+    summary["test_alpha_curve"] = report["test"]["results"]
+    RESULTS_PATH.write_text(json.dumps(summary, ensure_ascii=False, indent=2), encoding="utf-8")
+
+    predictor = predictor or PurchasePredictor()
+    points = load_points("test", predictor)
+    bounds = busiest_windows(points)
+    windows = [(lo, window_requests(points, lo, hi)) for lo, hi in bounds]
+    windows.sort(key=lambda w: (-sum(1 for u in {r.user for r in w[1] if r.buyer}), -len(w[1])))
+    chosen = []
+    for lo, requests in windows[:REPLAY_WINDOWS]:
+        renumber = {}
+        for r in sorted(requests, key=lambda r: r.arrival):
+            renumber.setdefault(r.user, len(renumber))
+        hour = int(points["cutoff"][lo] // 3_600_000)
+        chosen.append(
+            {
+                "hour_utc": datetime.fromtimestamp(hour * 3600, tz=timezone.utc).isoformat(),
+                "buyers": len({r.user for r in requests if r.buyer}),
+                # [도착(초), 고객 번호, 점수(배수), 결국 사는지]
+                "requests": [
+                    [round(r.arrival, 3), renumber[r.user], round(r.score, 2), r.buyer]
+                    for r in sorted(requests, key=lambda r: r.arrival)
+                ],
+            }
+        )
+    REPLAY_WINDOWS_PATH.write_text(
+        json.dumps(
+            {"settings": summary["settings"], "windows": chosen},
+            ensure_ascii=False,
+            separators=(",", ":"),
+        ),
+        encoding="utf-8",
+    )
+    return REPLAY_WINDOWS_PATH, len(chosen)
+
+
+def load_replay_windows(path=REPLAY_WINDOWS_PATH):
+    """재생용 시간대 파일을 읽어 시간대마다 Request 목록과 정보를 돌려준다."""
+    data = json.loads(path.read_text(encoding="utf-8"))
+    return [
+        {
+            "hour_utc": window["hour_utc"],
+            "buyers": window["buyers"],
+            "requests": [Request(a, u, s, b) for a, u, s, b in window["requests"]],
+        }
+        for window in data["windows"]
+    ]
 
 
 def print_table(name, split):
