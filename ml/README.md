@@ -222,10 +222,21 @@ CSV(`timestamp`, `itemid` 컬럼)로 결과를 바로 확인할 수도 있습니
 - RetailRocket 원본 학습 데이터는 배포 서버에 없으므로, 보정·비교에 쓰는 valid 일반 고객 행만 뽑은 참조 파일(`ml/data/product_purchase/pipeline_reference.parquet`, 약 15MB)을 `--build-reference`로 한 번 만들어 서버에 함께 둡니다. 고객을 A·B로 나누는 방법은 v2와 같습니다.
 - 반영되면 실행 중인 백엔드가 몇 초 안에 새 버전을 씁니다. 내보내기와 파이프라인을 한 번에 돌리려면 `backend/scripts/run_retrain.py`를 씁니다.
 
-### 9. 테스트
+### 9. 피크타임 우선 처리 시뮬레이션
+
+서버가 몰렸을 때 구매 확률이 높은 고객부터 처리하면 선착순보다 산 고객을 더 지키는지, RetailRocket 기록을 재생해 비교합니다. α(에이징 계수)는 valid로 정하고 test로 한 번 확인합니다. 결과는 [docs/ml/peak-simulation.md](../docs/ml/peak-simulation.md)에 정리했습니다.
+
+```powershell
+.\ml\.venv\Scripts\python.exe ml/product_purchase/peak_simulation.py
+```
+
+- 결과 요약(`ml/results/peak_simulation.json`)은 백엔드 결과 API가 읽도록 Git으로 관리하고, 이미 있으면 실행되지 않습니다. 전체 결과는 `ml/data/product_purchase/peak_simulation.json`에 저장됩니다.
+- 학습 데이터(`ml/data/product_purchase/training_rows/`)가 있어야 실행됩니다.
+
+### 10. 테스트
 
 ```powershell
 .\ml\.venv\Scripts\python.exe -m unittest discover -s ml/product_purchase/tests -t ml/product_purchase -v
 ```
 
-`test_features.py`는 손으로 만든 조회 기록으로 피처 정의를 확인합니다. `test_predict.py`는 Git에 포함된 확정 모델로 추론 결과의 형식과 일관성을 확인합니다. `test_release.py`는 임시 폴더로 버전 반영·되돌리기를 확인하고, `current.json`이 쓸 수 있는 버전을 가리키는지 확인합니다. `test_stage.py`의 시나리오 테스트는 `ml/models/`에 등록된 모든 버전으로 단계 판단을 확인하므로, 새 버전을 등록하면 단계 기준값이 그 버전에서도 통하는지 바로 드러납니다. `test_recalibrate.py`는 재보정의 등록 기준을 확인합니다. `test_experience.py`는 체험 기록 정제·학습 행·스위치를, `test_pipeline.py`는 임시 폴더와 가짜 체험 기록으로 파이프라인의 단계별 멈춤·등록·반영을 확인합니다.
+`test_features.py`는 손으로 만든 조회 기록으로 피처 정의를 확인합니다. `test_predict.py`는 Git에 포함된 확정 모델로 추론 결과의 형식과 일관성을 확인합니다. `test_release.py`는 임시 폴더로 버전 반영·되돌리기를 확인하고, `current.json`이 쓸 수 있는 버전을 가리키는지 확인합니다. `test_stage.py`의 시나리오 테스트는 `ml/models/`에 등록된 모든 버전으로 단계 판단을 확인하므로, 새 버전을 등록하면 단계 기준값이 그 버전에서도 통하는지 바로 드러납니다. `test_recalibrate.py`는 재보정의 등록 기준을 확인합니다. `test_experience.py`는 체험 기록 정제·학습 행·스위치를, `test_pipeline.py`는 임시 폴더와 가짜 체험 기록으로 파이프라인의 단계별 멈춤·등록·반영을 확인합니다. `test_peak_simulation.py`는 손으로 만든 요청으로 처리 순서, 이탈, 에이징을 확인합니다.
