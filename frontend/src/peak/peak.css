@@ -1,0 +1,912 @@
+/* 피크타임 시뮬레이션 화면 전용 스타일. 쇼핑몰 화면(styles.css)과 섞이지 않게 peak- 접두사를 쓴다. */
+.peak-page {
+  --peak-card: #fff;
+  --peak-soft: #f4f4f2;
+  /* 색 기준: Honeydew #F6FFEA, Soft Peach #FFDE96, Coral Glow #FA855A, Tomato Jam #C93638, Sky Blue #62C4DA.
+     칸 바탕에는 색을 쓰지 않고(흰색), 보조 버튼은 연한 Soft Peach로 썼다.
+     그래프 선에는 Sky Blue를 조금 진하게(#4FB8D1) 써야 흰 바탕에서 구분된다 (PeakPage.jsx의 COLORS와 같은 값) */
+  --peak-panel: #fff; /* 칸은 모두 흰색, 테두리와 옅은 그림자로 구분 */
+  --peak-metric-bg: #eef6f9; /* 결과 탭 지표 카드: 아주 연한 Sky */
+  --peak-ink: #222; /* 주요 버튼, 선택된 탭, 제목 */
+  --peak-button: #fff4de; /* 연한 Soft Peach: 보조 버튼 바탕 */
+  --peak-button-line: #f3d9a4;
+  --peak-line: #e2e2de;
+  --peak-dim: #6b6b6b;
+  --peak-high: #fa855a;
+  --peak-fifo: #4fb8d1;
+  --peak-priority-tint: #fffbf9; /* 아주 연한 Coral: 우선 처리 칸 바탕 */
+  --peak-priority-soft: #fff2ec; /* 떠남 알림(--peak-left-tint)과 헷갈리지 않게 아주 연하게 */
+  --peak-left-tint: #fbe6e5;
+  --peak-good-tint: #e3f4f8;
+  --peak-good: #1e6e82;
+  --peak-mid: #ffde96;
+  --peak-low: #d6e9ef;
+  --peak-left: #c93638;
+  /* 화면 너비를 다 쓴다 (양옆은 페이지 패딩만) */
+  --peak-width: 100%;
+  min-height: 100vh;
+  background: #fff;
+  color: #111;
+  /* 세 탭 모두 같은 위치에 상단 바가 오도록 시뮬레이션 탭과 같은 여백을 쓴다 */
+  padding: 12px 16px 32px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+/* 상단 바: 처음으로, 제목, 탭 */
+.peak-topbar {
+  width: 100%;
+  max-width: var(--peak-width);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+  min-height: 60px;
+  padding: 10px 4px;
+  border-bottom: 1px solid var(--peak-line);
+}
+
+.peak-topbar h1 {
+  color: var(--peak-ink);
+  font-size: 20px;
+  font-weight: 800;
+  margin: 0;
+}
+
+.peak-guide-toggle {
+  background: var(--peak-button);
+  border: 1px solid var(--peak-button-line);
+  border-radius: 999px;
+  padding: 5px 12px;
+  font-size: 13px;
+  color: var(--peak-dim);
+  cursor: pointer;
+}
+
+.peak-guide-wrap {
+  position: relative;
+}
+
+.peak-guide-wrap:hover .peak-guide-toggle,
+.peak-guide-wrap:focus-within .peak-guide-toggle {
+  background: var(--peak-mid);
+  color: #111;
+}
+
+.peak-tabs {
+  display: flex;
+  gap: 4px;
+  margin-left: auto;
+  background: var(--peak-panel);
+  border: 1px solid var(--peak-line);
+  border-radius: 8px;
+  padding: 4px;
+}
+
+.peak-tab {
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  padding: 9px 16px;
+  font-size: 14px;
+  color: var(--peak-dim);
+  cursor: pointer;
+}
+
+.peak-tab.is-active {
+  background: var(--peak-ink);
+  color: #fff;
+  font-weight: 700;
+}
+
+/* 이 시뮬레이션에서 볼 것 3줄 */
+/* 버튼에 마우스를 올리면 아래로 뜨는 안내 창 */
+.peak-guide {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  z-index: 10;
+  width: 360px;
+  margin: 0;
+  padding: 14px 16px;
+  list-style: none;
+  counter-reset: peak-guide;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: #fff;
+  border: 1px solid var(--peak-line);
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  font-size: 13px;
+  line-height: 1.5;
+  color: #333;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-4px);
+  transition: opacity 0.15s, transform 0.15s, visibility 0.15s;
+}
+
+.peak-guide-wrap:hover .peak-guide,
+.peak-guide-wrap:focus-within .peak-guide {
+  opacity: 1;
+  visibility: visible;
+  transform: none;
+}
+
+.peak-guide li::before {
+  counter-increment: peak-guide;
+  content: counter(peak-guide) ". ";
+  font-weight: 700;
+}
+
+/* ---------- 재생 조작 ---------- */
+.peak-toolbar {
+  width: 100%;
+  max-width: var(--peak-width);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 36px;
+  background: var(--peak-card);
+  border: 1px solid var(--peak-line);
+  border-radius: 10px;
+  padding: 6px 14px;
+}
+
+/* 이름과 입력을 한 줄에 놓아 조작 줄을 낮게 유지한다 */
+.peak-toolbar label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.peak-slider {
+  flex: 0 1 230px;
+}
+
+.peak-toolbar .is-disabled {
+  opacity: 0.4;
+}
+
+.peak-page select {
+  background: #fff;
+  color: #111;
+  border: 1px solid var(--peak-line);
+  border-radius: 6px;
+  padding: 4px 8px;
+}
+
+.peak-page input[type="range"] {
+  width: 100%;
+  accent-color: var(--peak-high);
+}
+
+.peak-buttons {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.peak-btn-outline {
+  background: var(--peak-button);
+  color: #111;
+  border: 1px solid var(--peak-button-line);
+}
+
+.peak-buttons .btn,
+.peak-toolbar .btn {
+  padding: 6px 14px;
+  font-size: 14px;
+}
+
+.peak-speed {
+  background: var(--peak-button);
+  color: var(--peak-dim);
+  border: 1px solid var(--peak-button-line);
+  border-radius: 6px;
+  padding: 6px 10px;
+  cursor: pointer;
+}
+
+.peak-speed.is-active {
+  color: #fff;
+  background: var(--peak-ink);
+  border-color: var(--peak-ink);
+}
+
+/* 쇼핑몰 공통 검정 버튼을 이 화면에서는 --peak-ink로 */
+.peak-page .btn-black {
+  background: var(--peak-ink);
+}
+
+/* 이름 + 버튼 묶음 (재생 속도). label과 같은 모양 */
+.peak-field {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--peak-dim);
+  white-space: nowrap;
+}
+
+.peak-play {
+  margin-left: auto;
+}
+
+/* 그래프 칸 맨 위 줄: 제목, 범례, 재생 시간 */
+.peak-live-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 22px;
+}
+
+.peak-live-head h3 {
+  margin: 0;
+  font-size: 15px;
+}
+
+.peak-live-head .peak-legend {
+  margin: 0;
+}
+
+/* 그래프마다 붙던 범례는 맨 위 줄과 겹치므로 숨긴다 */
+.peak-live .peak-chart .peak-legend {
+  display: none;
+}
+
+.peak-clock {
+  margin-left: auto;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  color: var(--peak-dim);
+}
+
+/* ---------- 재생 화면 ---------- */
+.peak-stage {
+  width: 100%;
+  max-width: var(--peak-width);
+  display: grid;
+  /* 화면이 넓어지면 남는 너비를 재생 칸 1 : 1 : 그래프 1.3 비율로 나눈다 (그래프 칸이 조금 더 늘어난다) */
+  grid-template-columns: 260px minmax(0, 1fr) minmax(0, 1fr) minmax(400px, 1.3fr);
+  gap: 12px;
+}
+
+.peak-arrivals,
+.peak-lane,
+.peak-live {
+  background: var(--peak-card);
+  border: 1px solid var(--peak-line);
+  border-radius: 10px;
+  padding: 14px;
+  min-width: 0;
+}
+
+/* 칸은 모두 흰색 + 옅은 그림자. 두 방식은 위쪽 색 띠로 구분 */
+.peak-toolbar,
+.peak-arrivals,
+.peak-live {
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  background: var(--peak-panel);
+}
+
+.peak-lane {
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+}
+
+.peak-lane-fifo {
+  border-top: 4px solid var(--peak-fifo);
+}
+
+.peak-lane-priority {
+  border-top: 4px solid var(--peak-high);
+  background: var(--peak-priority-tint);
+}
+
+.peak-lane-priority .peak-stats div {
+  background: var(--peak-priority-soft);
+}
+
+.peak-arrivals h3,
+.peak-lane h3 {
+  margin: 0;
+  font-size: 15px;
+}
+
+.peak-arrivals p {
+  font-size: 11px;
+  color: var(--peak-dim);
+  margin: 6px 0 10px;
+}
+
+.peak-arrivals ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.peak-arrival {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  animation: peak-in 0.4s ease-out;
+}
+
+@keyframes peak-in {
+  from {
+    opacity: 0;
+    transform: translateX(-8px);
+  }
+}
+
+/* 재생 칸: 대기열이 남는 높이를 채우고 최근 기록은 맨 아래에 붙는다 */
+.peak-lane {
+  display: flex;
+  flex-direction: column;
+}
+
+.peak-lane header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.peak-lane header span {
+  font-size: 11px;
+  color: var(--peak-dim);
+}
+
+.peak-lane-empty {
+  color: var(--peak-dim);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.peak-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+  margin: 12px 0;
+}
+
+.peak-stats div {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: var(--peak-soft);
+  border-radius: 8px;
+  padding: 8px 4px;
+}
+
+.peak-stats b {
+  font-size: 20px;
+  font-variant-numeric: tabular-nums;
+}
+
+.peak-stats span {
+  font-size: 11px;
+  color: var(--peak-dim);
+}
+
+.peak-stat-left b {
+  color: var(--peak-left);
+}
+
+.peak-queue {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-height: 120px;
+  flex: 1;
+  align-content: flex-start;
+}
+
+.peak-chip {
+  font-size: 11px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  font-variant-numeric: tabular-nums;
+  transition: transform 0.2s;
+}
+
+.peak-chip-high {
+  background: var(--peak-high);
+  color: #111;
+}
+
+.peak-chip-mid {
+  background: var(--peak-mid);
+  color: #111;
+}
+
+.peak-chip-low {
+  background: var(--peak-low);
+  color: #333;
+}
+
+.peak-more,
+.peak-empty {
+  font-size: 11px;
+  color: var(--peak-dim);
+  align-self: center;
+}
+
+.peak-recent {
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* 최근 기록 한 줄: 들어오는 고객 목록처럼 색 있는 줄로 보여준다 */
+.peak-recent-item {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 12px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  animation: peak-in 0.4s ease-out;
+}
+
+.peak-recent-served {
+  background: var(--peak-good-tint);
+  color: var(--peak-good);
+}
+
+.peak-recent-left {
+  background: var(--peak-left-tint);
+  color: var(--peak-left);
+}
+
+.peak-recent-buyer {
+  background: var(--peak-left);
+  color: #fff;
+  font-weight: 700;
+}
+
+.peak-live {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* 그래프 하나하나를 흰 카드에 담아 칸 안에서 간격이 고르게 보이게 한다 */
+.peak-live .peak-chart {
+  background: #fff;
+  border: 1px solid var(--peak-line);
+  border-radius: 8px;
+  padding: 10px 12px 6px;
+}
+
+.peak-live .peak-chart figcaption {
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+/* 구매 고객이 떠났을 때: 알림, 칸 테두리와 지킨 구매 고객 숫자 깜빡임 */
+.peak-alert-slot {
+  min-height: 2px;
+  margin-top: 8px;
+}
+
+.peak-alert {
+  background: var(--peak-left-tint);
+  color: var(--peak-left);
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 13px;
+  font-weight: 700;
+  animation: peak-in 0.3s ease-out;
+}
+
+/* 알림이 떠 있는 동안 빨간 테두리를 유지한다 */
+.peak-lane-alert {
+  border-color: var(--peak-left);
+  box-shadow: 0 0 0 2px var(--peak-left);
+}
+
+/* 새로 떠날 때마다 한 번 더 진하게 깜빡이는 덧칠 (사건마다 새로 그려진다) */
+.peak-lane {
+  position: relative;
+}
+
+.peak-lane-flash {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  animation: peak-flash 0.9s ease-out forwards;
+}
+
+.peak-lane-alert .peak-stat-buyers {
+  animation: peak-flash-bg 0.9s ease-out;
+}
+
+.peak-lane-alert .peak-stat-buyers b {
+  color: var(--peak-left);
+}
+
+@keyframes peak-flash {
+  from {
+    box-shadow: 0 0 0 5px var(--peak-left);
+  }
+  to {
+    box-shadow: 0 0 0 0 transparent;
+  }
+}
+
+@keyframes peak-flash-bg {
+  from {
+    background: #f2bdbd;
+  }
+}
+
+/* ---------- 그래프 ---------- */
+.peak-chart {
+  margin: 0;
+}
+
+.peak-chart figcaption {
+  font-size: 13px;
+  margin-bottom: 4px;
+}
+
+.peak-chart svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.peak-grid {
+  stroke: var(--peak-line);
+  stroke-width: 1;
+}
+
+.peak-axis {
+  fill: var(--peak-dim);
+  font-size: 9px;
+}
+
+.peak-value {
+  fill: #111;
+  font-size: 9px;
+}
+
+.peak-curve {
+  stroke: var(--peak-high);
+  stroke-width: 1.5;
+  opacity: 0.6;
+}
+
+.peak-dot {
+  fill: var(--peak-high);
+  opacity: 0.6;
+}
+
+.peak-dot-chosen {
+  fill: var(--peak-high);
+  stroke: #fff;
+  stroke-width: 1.5;
+}
+
+.peak-dot-fifo {
+  fill: var(--peak-fifo);
+  stroke: #fff;
+  stroke-width: 1.5;
+}
+
+.peak-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  font-size: 11px;
+  color: var(--peak-dim);
+  margin-top: 4px;
+}
+
+.peak-legend i {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  margin-right: 4px;
+  vertical-align: -1px;
+}
+
+/* ---------- 전체 결과 ---------- */
+.peak-overall {
+  width: 100%;
+  max-width: var(--peak-width);
+  background: var(--peak-card);
+  border: 1px solid var(--peak-line);
+  border-radius: 10px;
+  padding: 20px 24px;
+}
+
+/* 결과 탭은 화면 너비를 다 쓰므로 그래프가 너무 커지지 않게 높이를 묶는다 */
+.peak-overall .peak-chart svg {
+  max-height: 200px;
+}
+
+.peak-overall h2 {
+  color: var(--peak-ink);
+  margin: 0 0 8px;
+  font-size: 20px;
+}
+
+.peak-overall p {
+  color: var(--peak-dim);
+  line-height: 1.6;
+}
+
+.peak-overall b {
+  color: #111;
+}
+
+.peak-overall-charts {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 32px;
+  margin: 12px 0;
+}
+
+.peak-caveat {
+  font-size: 12px;
+}
+
+.peak-error {
+  color: var(--peak-left);
+}
+
+.peak-back {
+  color: #111;
+  opacity: 0.7;
+}
+
+.peak-attribution {
+  font-size: 11px;
+  color: var(--peak-dim);
+  margin: 0;
+}
+
+/* ---------- 시뮬레이션 탭: 화면 높이 하나에 맞춤 ---------- */
+.peak-page-fit {
+  height: 100vh;
+  height: 100dvh;
+  min-height: 0;
+  overflow: hidden;
+  padding: 12px 16px;
+  gap: 10px;
+}
+
+.peak-page-fit .peak-stage {
+  flex: 1;
+  min-height: 0;
+  grid-template-rows: minmax(0, 1fr);
+}
+
+.peak-page-fit .peak-arrivals,
+.peak-page-fit .peak-lane,
+.peak-page-fit .peak-live {
+  overflow: hidden;
+}
+
+.peak-page-fit .peak-queue {
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* 그래프 두 개가 칸 높이를 나눠 갖는다 */
+.peak-page-fit .peak-live .peak-chart {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.peak-page-fit .peak-live .peak-chart svg {
+  flex: 1;
+  min-height: 0;
+  height: 100%;
+  max-height: none;
+}
+
+/* 결과 탭 두 개: 한 화면에 맞추고, 넘치면 칸 안에서 스크롤 */
+.peak-page-fit .peak-overall {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: auto;
+}
+
+/* 결과 박스 안 요소 사이 간격은 margin 대신 gap 하나로 맞춘다 */
+.peak-page-fit .peak-overall {
+  gap: 20px;
+  padding: 24px 28px;
+}
+
+.peak-page-fit .peak-overall > * {
+  margin: 0;
+}
+
+/* 시뮬레이션 결과 탭의 그래프 두 개 */
+.peak-scene-charts {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+  margin: 16px 0;
+}
+
+/* 시뮬레이션 결과 탭의 지표 카드: 두 방식을 막대로 나란히 */
+.peak-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin: 16px 0;
+}
+
+.peak-metrics-3 {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.peak-metric {
+  background: var(--peak-metric-bg);
+  border: 1px solid var(--peak-low);
+  border-radius: 10px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.peak-metric-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.peak-metric-head em {
+  font-style: normal;
+  font-size: 12px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #e4e5e7;
+  color: var(--peak-dim);
+}
+
+.peak-metric-head em.is-better {
+  background: var(--peak-good-tint);
+  color: var(--peak-good);
+}
+
+.peak-metric-head em.is-worse {
+  background: var(--peak-left-tint);
+  color: var(--peak-left);
+}
+
+.peak-metric-row {
+  display: grid;
+  grid-template-columns: 84px 1fr 56px;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+}
+
+.peak-metric-name {
+  color: var(--peak-dim);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.peak-metric-bar {
+  height: 10px;
+  background: #fff;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.peak-metric-bar i {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+}
+
+.peak-metric-row b {
+  text-align: right;
+  font-size: 15px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* 실험 조건 칩 */
+.peak-conditions {
+  list-style: none;
+  margin: 4px 0 8px;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.peak-conditions li {
+  font-size: 12px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--peak-panel);
+  border: 1px solid var(--peak-line);
+  color: #444;
+}
+
+/* 장면 결과와 같은 설정의 전체 결과 비교 */
+.peak-compare {
+  margin: 4px 0 8px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  background: var(--peak-priority-tint);
+  border: 1px solid var(--peak-mid);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.peak-loading {
+  color: var(--peak-dim);
+}
+
+/* ---------- 좁은 화면 ---------- */
+@media (max-width: 1100px) {
+  /* 칸이 두 줄로 내려가면 한 화면에 담을 수 없어 스크롤을 허용한다 */
+  .peak-page-fit {
+    height: auto;
+    overflow: visible;
+  }
+  .peak-page-fit .peak-stage {
+    grid-template-rows: none;
+  }
+  .peak-metrics {
+    grid-template-columns: 1fr 1fr;
+  }
+  .peak-scene-charts {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+  .peak-stage {
+    grid-template-columns: 1fr 1fr;
+  }
+  .peak-arrivals,
+  .peak-live {
+    grid-column: span 2;
+  }
+}
+
+@media (max-width: 720px) {
+  .peak-stage,
+  .peak-overall-charts {
+    grid-template-columns: 1fr;
+  }
+  .peak-arrivals,
+  .peak-live {
+    grid-column: auto;
+  }
+  .peak-tabs {
+    margin-left: 0;
+  }
+}

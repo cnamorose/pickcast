@@ -6,12 +6,14 @@ import ProductDetailPage from "./pages/ProductDetailPage";
 import CheckoutPage from "./pages/CheckoutPage";
 import WaitingPage from "./pages/WaitingPage";
 import ResultPage from "./pages/ResultPage";
+import PeakPage from "./peak/PeakPage";
 import "./styles.css";
 
 function Layout() {
   const location = useLocation();
   const { pathname } = location;
-  const hideNavbar = pathname === "/"; // 체험시작 화면에는 상단바를 안 보여줌
+  // 체험시작 화면과 피크타임 시뮬레이션 화면에는 쇼핑몰 상단바를 안 보여줌
+  const hideNavbar = pathname === "/" || pathname === "/peak";
   // 상품 목록 버튼은 쇼핑 중(상세·결제)에만 보여준다.
   // 결제 후에는 결과 화면의 "처음으로"로만 나가야 새 세션으로 시작된다.
   const showListButton = pathname.startsWith("/products/") || pathname.startsWith("/checkout/");
@@ -36,6 +38,7 @@ function Layout() {
         <Route path="/checkout/:id" element={<CheckoutPage />} />
         <Route path="/waiting" element={<WaitingPage />} />
         <Route path="/result" element={<ResultPage />} />
+        <Route path="/peak" element={<PeakPage />} />
       </Routes>
     </>
   );

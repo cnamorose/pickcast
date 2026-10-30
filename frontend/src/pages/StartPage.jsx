@@ -38,9 +38,15 @@ export default function StartPage() {
           <b>3</b>AI 예측 확인
         </li>
       </ol>
-      <button className="btn btn-white" onClick={handleStart}>
-        시작하기
-      </button>
+      <div className="start-actions">
+        <button className="btn btn-white" onClick={handleStart}>
+          시작하기
+        </button>
+        {/* 쇼핑 체험과 별개인 시뮬레이션 화면. 세션을 만들지 않는다. */}
+        <button className="btn btn-outline-white" onClick={() => navigate("/peak")}>
+          피크타임 시뮬레이션
+        </button>
+      </div>
     </div>
   );
 }
