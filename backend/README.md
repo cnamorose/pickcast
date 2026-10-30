@@ -106,7 +106,9 @@ docker compose up -d
 | `POST /sessions/{id}/purchases` | 결제 저장, 세션을 `purchased`로 닫음 |
 | `GET /sessions/{id}/predictions` | 결과 화면용 예측과 확률 변화(`timeline`) |
 | `GET /dashboard` | 판매자 대시보드. 지금 쇼핑 중인 세션의 상품별 예상 구매, 단계별 인원, 자주 비교되는 상품 쌍 |
-| `GET /peak-simulation` | 피크타임 우선 처리 시뮬레이션 결과. 선착순·확률 우선·에이징의 test 비교와 valid α 곡선 |
+| `GET /peak-simulation` | 피크타임 우선 처리 시뮬레이션 결과. 선착순·확률 우선·에이징의 test 비교와 valid·test α 곡선 |
+| `GET /peak-simulation/windows` | 재생할 수 있는 시간대 목록 |
+| `GET /peak-simulation/replay` | 시간대 하나를 한 방식으로 재생한 도착·처리·이탈 사건과 요약 |
 
 ### 구매 의도 단계 (`stage`)
 
@@ -220,7 +222,37 @@ python backend/scripts/seed_dashboard.py --shoppers 30
 | `low_left_rate` | 확률 낮은 고객(구경 수준) 중 떠난 비율 |
 | `left_rate` | 전체 고객 중 떠난 비율 |
 | `low_wait_mean` | 확률 낮은 고객 요청의 평균 대기(초) |
-| `valid_alpha_curve` | α별 결과. 구매 고객 보호와 확률 낮은 고객 이탈을 맞바꾸는 곡선 그래프용 |
+| `valid_alpha_curve`, `test_alpha_curve` | α별 결과. 구매 고객 보호와 확률 낮은 고객 이탈을 맞바꾸는 곡선 그래프용 (발표에는 test) |
+
+### 피크타임 재생 (`/peak-simulation/windows`, `/peak-simulation/replay`)
+
+몰리는 장면을 화면에서 재생하기 위한 API입니다. 저장된 시간대(`ml/results/peak_replay_windows.json`, test의 붐비는 1시간을 60초로 압축한 5개) 하나를 요청받은 방식으로 바로 재생합니다. 한 번에 5ms 안팎, 응답 50KB 정도입니다.
+
+```
+GET /peak-simulation/replay?window=3&policy=priority&alpha=0&overload=1.5
+```
+
+| 파라미터 | 뜻 | 기본 |
+|---|---|---|
+| `window` | 시간대 번호 (`/windows`) | 0 |
+| `policy` | `fifo`(선착순) / `priority`(확률 우선) / `aging`(확률 우선 + 에이징) | `aging` |
+| `alpha` | 에이징 계수. `aging`일 때만 쓰임 | 20 |
+| `overload` | 과부하 배수 (1~5). 서버 처리량 = 평균 도착 ÷ 과부하 | 1.5 |
+
+응답의 `events`는 시간 순서입니다.
+
+| `event` | 필드 | 화면 |
+|---|---|---|
+| `arrive` | `t`, `user`, `score`(구매 확률 배수), `buyer`(결국 사는지) | 왼쪽 대기열에 손님 추가 |
+| `served` | `t`, `user`, `wait` | 처리됨 |
+| `left` | `t`, `user`, `buyer` | 10초 넘게 기다려 떠남 |
+| `ignored` | `t`, `user` | 이미 떠난 손님의 요청 |
+| `tick` | `t`, `queue`, `served`, `left` | 매초 현황 (대기열 길이, 누적 처리, 누적 이탈) 그래프 |
+
+`summary`에는 고객 수, 구매 고객 수, 지킨 구매 고객 수, 떠난 고객 수, 처리 수가 있습니다.
+
+* 선착순과 우선 처리를 나란히 보여줄 때는 `policy`만 바꿔 두 번 호출합니다. 같은 시간대는 같은 손님들입니다.
+* **시간대 하나는 구매 고객이 7~8명뿐이라 결과가 크게 흔들립니다.** 선택한 α=20이 선착순보다 나쁜 시간대도 있습니다. 재생 화면은 처리되는 모습을 보여주는 용도로 쓰고, 효과는 `/peak-simulation`의 전체 결과로 보여주세요. `/windows` 응답의 `note`에 안내 문구가 있습니다.
 
 ## 재학습용 체험 기록 내보내기
 
