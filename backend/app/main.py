@@ -6,6 +6,7 @@ from . import models  # noqa: F401  테이블 정의를 등록
 from .dashboard_api import router as dashboard_router
 from .db import create_tables, engine
 from .ml import get_predictor, models
+from .peak_api import router as peak_router
 from .sessions import router as sessions_router
 
 
@@ -23,6 +24,7 @@ create_tables()
 
 app.include_router(sessions_router)
 app.include_router(dashboard_router)
+app.include_router(peak_router)
 
 
 @app.get("/")
