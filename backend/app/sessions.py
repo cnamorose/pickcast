@@ -107,16 +107,16 @@ def add_purchase(
 
 
 def views_before_decision(views, purchased_item):
-    """결제하러 들어간 마지막 방문(끝에 연달아 있는 구매 상품 조회)을 뺀 조회 목록.
+    """결제하러 들어간 마지막 방문(마지막 구매 상품 조회 1개)을 뺀 조회 목록.
 
     구매하려면 상품 상세페이지를 거쳐야 해서, 구매 상품은 항상 마지막 조회가 된다.
     이 조회까지 넣으면 "방금 본 상품"이라는 이유만으로 맞히게 되므로 채점에서 뺀다.
-    그보다 앞에서 본 구매 상품 조회는 결정 전부터의 관심이라 남긴다.
+    그보다 앞에서 본 구매 상품 조회는 바로 앞에 연달아 있어도 결정 전부터의 관심이라 남긴다.
+    (상세페이지에 한 번 들어갈 때 조회는 한 번만 기록되므로, 연속 조회는 실제로 다시 본 것이다)
     """
-    end = len(views)
-    while end > 0 and views[end - 1][1] == purchased_item:
-        end -= 1
-    return views[:end]
+    if views and views[-1][1] == purchased_item:
+        return views[:-1]
+    return views
 
 
 @router.get("/{session_id}/predictions")
