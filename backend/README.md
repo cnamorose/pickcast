@@ -106,6 +106,7 @@ docker compose up -d
 | `POST /sessions/{id}/purchases` | 결제 저장, 세션을 `purchased`로 닫음 |
 | `GET /sessions/{id}/predictions` | 결과 화면용 예측과 확률 변화(`timeline`) |
 | `GET /dashboard` | 판매자 대시보드. 지금 쇼핑 중인 세션의 상품별 예상 구매, 단계별 인원, 자주 비교되는 상품 쌍 |
+| `GET /peak-simulation` | 피크타임 우선 처리 시뮬레이션 결과. 선착순·확률 우선·에이징의 test 비교와 valid α 곡선 |
 
 ### 구매 의도 단계 (`stage`)
 
@@ -196,6 +197,30 @@ python backend/scripts/seed_dashboard.py --shoppers 30
 * `--seed`: 같은 손님 구성을 다시 만들 때 지정
 * 30분이 지나면 쇼핑 중에서 빠지므로 다시 실행하면 됩니다. 데이터를 지우려면 `docker compose down -v`
 * 가상 손님은 `mode = simulated`로 저장되어 대시보드에는 나오지만 재학습 데이터에는 쓰이지 않습니다.
+
+### 피크타임 우선 처리 결과 (`/peak-simulation`)
+
+시뮬레이션은 무거워 ml 쪽에서 미리 돌리고(`ml/product_purchase/peak_simulation.py`), 이 API는 저장된 요약 `ml/results/peak_simulation.json`을 그대로 돌려줍니다. 요청마다 파일을 읽어 결과가 바뀌어도 재시작할 필요가 없고, 파일이 없으면 404입니다. 방법과 해석은 `docs/ml/peak-simulation.md`에 있습니다.
+
+```json
+{
+  "settings": { "chosen_alpha": 20.0, "overload": 1.5, "timeout_seconds": 10, ... },
+  "test": {
+    "fifo":     { "protected_buyer_rate": 0.571, "low_left_rate": 0.141, ... },
+    "priority": { "protected_buyer_rate": 0.821, "low_left_rate": 0.455, ... },
+    "aging":    { "protected_buyer_rate": 0.627, "low_left_rate": 0.174, ... }
+  },
+  "valid_alpha_curve": [ { "policy": "fifo", "alpha": 0.0, ... }, ... ]
+}
+```
+
+| 필드 | 뜻 |
+|---|---|
+| `protected_buyer_rate` | 결국 산 고객 중 떠나지 않은 비율 (핵심 지표) |
+| `low_left_rate` | 확률 낮은 고객(구경 수준) 중 떠난 비율 |
+| `left_rate` | 전체 고객 중 떠난 비율 |
+| `low_wait_mean` | 확률 낮은 고객 요청의 평균 대기(초) |
+| `valid_alpha_curve` | α별 결과. 구매 고객 보호와 확률 낮은 고객 이탈을 맞바꾸는 곡선 그래프용 |
 
 ## 재학습용 체험 기록 내보내기
 
