@@ -113,7 +113,7 @@ ml/data/
 
 #### 모델 버전 반영과 되돌리기
 
-서비스가 쓸 버전은 `ml/models/current.json`이 정합니다. 백엔드는 시작할 때 이 파일을 읽으므로, 바꾼 뒤 서버를 다시 시작하면 반영됩니다. 세션에 기록되는 `model_version`도 이 버전 이름이 됩니다.
+서비스가 쓸 버전은 `ml/models/current.json`이 정합니다. 백엔드는 몇 초마다 이 파일을 확인해 재시작 없이 새 버전을 불러옵니다(`backend/README.md`의 "모델 자동 교체"). 세션에 기록되는 `model_version`도 이 버전 이름이 됩니다.
 
 ```powershell
 .\ml\.venv\Scripts\python.exe ml/product_purchase/release.py list      # 버전 목록과 지금 쓰는 버전
@@ -220,7 +220,7 @@ CSV(`timestamp`, `itemid` 컬럼)로 결과를 바로 확인할 수도 있습니
 | ⑦ 반영 | `auto_release`가 켜져 있으면 `current.json` 변경. 꺼져 있으면 `release.py use` 명령만 안내 | |
 
 - RetailRocket 원본 학습 데이터는 배포 서버에 없으므로, 보정·비교에 쓰는 valid 일반 고객 행만 뽑은 참조 파일(`ml/data/product_purchase/pipeline_reference.parquet`, 약 15MB)을 `--build-reference`로 한 번 만들어 서버에 함께 둡니다. 고객을 A·B로 나누는 방법은 v2와 같습니다.
-- 반영 후에는 백엔드를 재시작해야 새 버전이 적용됩니다.
+- 반영되면 실행 중인 백엔드가 몇 초 안에 새 버전을 씁니다. 내보내기와 파이프라인을 한 번에 돌리려면 `backend/scripts/run_retrain.py`를 씁니다.
 
 ### 9. 테스트
 

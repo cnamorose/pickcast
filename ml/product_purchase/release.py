@@ -6,7 +6,7 @@
       product_purchase_v2/
 
 버전 폴더는 덮어쓰지 않고 새로 만든다. 반영과 되돌리기는 current.json만 바꾼다.
-서버(백엔드)는 시작할 때 current.json을 읽으므로, 바꾼 뒤 서버를 다시 시작해야 반영된다.
+백엔드는 몇 초마다 current.json을 확인해 재시작 없이 새 버전을 불러온다 (backend/app/ml.py).
 
     python ml/product_purchase/release.py list       # 버전 목록과 지금 쓰는 버전
     python ml/product_purchase/release.py use v2     # v2로 반영 (product_purchase_v2와 같음)
@@ -138,7 +138,7 @@ def main():
         except ValueError as error:
             raise SystemExit(f"바꾸지 않았습니다. {error}")
         print(f"{previous} → {version}")
-        print("백엔드 서버를 다시 시작하면 반영됩니다.")
+        print("실행 중인 백엔드는 몇 초 안에 새 버전을 씁니다 (/health의 model_version으로 확인).")
 
 
 if __name__ == "__main__":
