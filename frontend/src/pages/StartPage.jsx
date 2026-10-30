@@ -46,6 +46,10 @@ export default function StartPage() {
         <button className="btn btn-outline-white" onClick={() => navigate("/peak")}>
           피크타임 시뮬레이션
         </button>
+        {/* 판매자(운영자)용 화면. 세션을 만들지 않는다. */}
+        <button className="btn btn-outline-white" onClick={() => navigate("/admin")}>
+          판매자 대시보드
+        </button>
       </div>
     </div>
   );
