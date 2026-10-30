@@ -231,6 +231,7 @@ CSV(`timestamp`, `itemid` 컬럼)로 결과를 바로 확인할 수도 있습니
 ```
 
 - 결과 요약(`ml/results/peak_simulation.json`)은 백엔드 결과 API가 읽도록 Git으로 관리하고, 이미 있으면 실행되지 않습니다. 전체 결과는 `ml/data/product_purchase/peak_simulation.json`에 저장됩니다.
+- 재생 화면용 파일은 `--replay-assets`로 만듭니다. test의 붐비는 시간대 5개 요청(`ml/results/peak_replay_windows.json`)을 저장하고 요약에 test α 곡선을 더하며, test를 다시 평가하지 않습니다. 백엔드 재생 API는 `replay()`로 시간대 하나를 재생해 도착·처리·이탈 사건을 받습니다.
 - 학습 데이터(`ml/data/product_purchase/training_rows/`)가 있어야 실행됩니다.
 
 ### 10. 테스트

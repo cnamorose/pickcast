@@ -1,7 +1,15 @@
 """peak_simulation.py의 처리 순서, 이탈, 에이징을 손으로 만든 요청으로 확인한다."""
 import unittest
 
-from peak_simulation import Request, choose_alpha, priority_key, simulate
+from peak_simulation import (
+    REPLAY_WINDOWS_PATH,
+    Request,
+    choose_alpha,
+    load_replay_windows,
+    priority_key,
+    replay,
+    simulate,
+)
 
 
 def served_order(requests, capacity, policy, alpha=0.0, timeout=100):
@@ -59,6 +67,51 @@ class TimeoutTest(unittest.TestCase):
         left, waits = simulate(requests, 5, "fifo", timeout=3)
         self.assertEqual(left, set())
         self.assertEqual(len(waits), 10)
+
+
+class TraceTest(unittest.TestCase):
+    def setUp(self):
+        self.requests = [Request(0.0, 9, 9.0, False) for _ in range(6)]
+        self.requests += [Request(0.5, 1, 1.0, True), Request(5.0, 1, 1.0, True), Request(6.0, 2, 3.0, False)]
+
+    def test_trace_does_not_change_result(self):
+        plain = simulate(self.requests, 1, "priority", timeout=3)
+        trace = []
+        traced = simulate(self.requests, 1, "priority", timeout=3, trace=trace)
+        self.assertEqual(plain, traced)
+
+    def test_every_request_is_accounted_for(self):
+        trace = []
+        left, waits = simulate(self.requests, 1, "priority", timeout=3, trace=trace)
+        events = {e["event"] for e in trace}
+        self.assertLessEqual(events, {"arrive", "ignored", "left", "served", "tick"})
+        arrived = sum(1 for e in trace if e["event"] in ("arrive", "ignored"))
+        self.assertEqual(arrived, len(self.requests))
+        self.assertEqual(sum(1 for e in trace if e["event"] == "served"), len(waits))
+        self.assertEqual({e["user"] for e in trace if e["event"] == "left"}, left)
+
+    def test_tick_counts_are_cumulative(self):
+        trace = []
+        simulate(self.requests, 1, "fifo", timeout=3, trace=trace)
+        ticks = [e for e in trace if e["event"] == "tick"]
+        self.assertEqual([e["t"] for e in ticks], list(range(1, len(ticks) + 1)))
+        self.assertEqual([e["served"] for e in ticks], sorted(e["served"] for e in ticks))
+
+    def test_replay_summary(self):
+        result = replay(self.requests, "fifo")
+        summary = result["summary"]
+        self.assertEqual(summary["buyers"], 1)
+        self.assertEqual(summary["users"], 3)
+        self.assertEqual(summary["served_requests"], sum(1 for e in result["events"] if e["event"] == "served"))
+
+
+class ReplayWindowsTest(unittest.TestCase):
+    def test_repository_windows_load(self):
+        windows = load_replay_windows(REPLAY_WINDOWS_PATH)
+        self.assertTrue(windows)
+        for window in windows:
+            self.assertGreater(window["buyers"], 0)
+            self.assertTrue(all(isinstance(r, Request) for r in window["requests"]))
 
 
 class ChooseAlphaTest(unittest.TestCase):
