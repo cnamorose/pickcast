@@ -7,7 +7,7 @@ from sqlmodel import Session, select
 from .db import get_db
 from .insights import dashboard_insights
 from .inventory import STOCK
-from .ml import compare_pairs, count_stages, forecast_sales, judge_stage, predictor
+from .ml import compare_pairs, count_stages, forecast_sales, get_predictor, judge_stage
 from .models import Purchase, ShoppingSession, View, utc_now
 from .sessions import load_views, now_ms
 
@@ -36,6 +36,7 @@ def active_session_ids(db: Session):
 @router.get("/dashboard")
 def get_dashboard(db: Session = Depends(get_db)):
     session_ids = active_session_ids(db)
+    predictor = get_predictor()
 
     # 세션마다 마지막 조회 시점의 상품별 확률과 단계를 구해 상품별·단계별로 모은다.
     probabilities = defaultdict(list)
