@@ -1,0 +1,495 @@
+/* 판매자 대시보드 전용 스타일. 쇼핑몰 화면과 섞이지 않게 dash- 접두사를 쓴다. */
+.dash-page {
+  min-height: 100vh;
+  background: #f6f5f2;
+  color: #111;
+  padding: 0 24px 48px;
+}
+
+.dash-muted {
+  color: #77736c;
+  font-size: 13px;
+}
+
+/* 상단 바 */
+.dash-topbar {
+  max-width: 1280px;
+  margin: 0 auto;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px 24px;
+  padding: 24px 0 20px;
+}
+
+.dash-topbar h1 {
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  margin: 0 0 4px;
+}
+
+.dash-topbar p {
+  margin: 0;
+}
+
+.dash-topbar-right {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.dash-live {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #1e7a4c;
+  background: #e5f4ec;
+  padding: 5px 10px;
+  border-radius: 999px;
+}
+
+.dash-live::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+  animation: dash-blink 1.4s ease-in-out infinite;
+}
+
+.dash-live-off {
+  color: #77736c;
+  background: #ebe9e4;
+}
+
+.dash-live-off::before {
+  animation: none;
+}
+
+@keyframes dash-blink {
+  50% {
+    opacity: 0.3;
+  }
+}
+
+.dash-btn {
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: 1px solid #dcd9d2;
+  background: #fff;
+  color: #111;
+  cursor: pointer;
+}
+
+.dash-btn:hover {
+  border-color: #111;
+}
+
+/* 레이아웃 */
+.dash-grid {
+  max-width: 1280px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 360px;
+  gap: 20px;
+  align-items: start;
+}
+
+.dash-main,
+.dash-side {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-width: 0;
+}
+
+@media (max-width: 1000px) {
+  .dash-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.dash-card {
+  background: #fff;
+  border: 1px solid #e6e4df;
+  border-radius: 12px;
+  padding: 20px;
+}
+
+.dash-card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  margin-bottom: 14px;
+}
+
+.dash-card-head h2 {
+  font-size: 17px;
+  font-weight: 800;
+  margin: 0;
+}
+
+/* 단계별 인원 */
+.dash-stage-tiles {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.dash-stage-tile {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  column-gap: 8px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: #f6f5f2;
+}
+
+.dash-stage-tile b {
+  grid-column: 1 / -1;
+  font-size: 28px;
+  font-weight: 800;
+  line-height: 1.2;
+  margin-top: 4px;
+}
+
+.dash-stage-label {
+  font-size: 13px;
+  color: #55524c;
+}
+
+.dash-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.dash-stack {
+  display: flex;
+  height: 10px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: #ebe9e4;
+  gap: 2px;
+}
+
+@media (max-width: 600px) {
+  .dash-stage-tiles {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* 상품 표 */
+.dash-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: #55524c;
+  cursor: pointer;
+}
+
+.dash-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.dash-tab {
+  font-family: inherit;
+  font-size: 13px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid #e6e4df;
+  background: #fff;
+  color: #55524c;
+  cursor: pointer;
+}
+
+.dash-tab-active {
+  background: #111;
+  border-color: #111;
+  color: #fff;
+  font-weight: 700;
+}
+
+.dash-table-wrap {
+  overflow-x: auto;
+}
+
+.dash-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.dash-table th {
+  text-align: left;
+  font-size: 12px;
+  font-weight: 600;
+  color: #77736c;
+  padding: 8px 10px;
+  border-bottom: 1px solid #e6e4df;
+  white-space: nowrap;
+}
+
+.dash-table td {
+  padding: 10px;
+  border-bottom: 1px solid #f0eee9;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.dash-table .num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.dash-col-prob {
+  min-width: 200px;
+}
+
+.dash-prob {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.dash-prob b {
+  width: 52px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.dash-bar {
+  flex: 1;
+  height: 8px;
+  border-radius: 999px;
+  background: #f0eee9;
+  overflow: hidden;
+}
+
+.dash-bar span {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: #c8553d;
+}
+
+.dash-product {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.dash-product div {
+  display: flex;
+  flex-direction: column;
+}
+
+.dash-product span {
+  font-size: 12px;
+  color: #77736c;
+}
+
+.dash-thumb {
+  flex: none;
+  object-fit: cover;
+  border-radius: 6px;
+  background: #f0eee9;
+}
+
+.dash-badge {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+
+.dash-badge-out {
+  background: #fbe6e5;
+  color: #b2302f;
+}
+
+.dash-badge-low {
+  background: #fff1d6;
+  color: #9a6a12;
+}
+
+.dash-footnote {
+  margin: 12px 0 0;
+  font-size: 12px;
+  color: #77736c;
+}
+
+/* 인사이트 */
+.dash-insights {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.dash-insight {
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: #f6f5f2;
+  border-left: 4px solid #b9b5ad;
+}
+
+.dash-insight p {
+  margin: 6px 0 0;
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.dash-insight-tag {
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.dash-tone-warn {
+  border-left-color: #d9a441;
+}
+
+.dash-tone-warn .dash-insight-tag {
+  color: #9a6a12;
+}
+
+.dash-tone-info {
+  border-left-color: #3a7ca5;
+}
+
+.dash-tone-info .dash-insight-tag {
+  color: #24627e;
+}
+
+.dash-tone-muted .dash-insight-tag {
+  color: #77736c;
+}
+
+.dash-insight-items {
+  display: flex;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+/* 비교 상품 쌍 */
+.dash-pairs {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.dash-pairs li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid #f0eee9;
+}
+
+.dash-pairs li:last-child {
+  border-bottom: none;
+}
+
+.dash-rank {
+  width: 22px;
+  height: 22px;
+  flex: none;
+  border-radius: 50%;
+  background: #111;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dash-pair-items {
+  display: flex;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+}
+
+.dash-pair-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.dash-pair-count {
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+/* 빈 화면 */
+.dash-empty {
+  max-width: 1280px;
+  margin: 0 auto 20px;
+  background: #fff;
+  border: 1px dashed #d4d0c7;
+  border-radius: 12px;
+  padding: 18px 20px;
+}
+
+.dash-empty p {
+  margin: 6px 0 0;
+  font-size: 14px;
+  color: #55524c;
+}
+
+.dash-empty code {
+  background: #f0eee9;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 13px;
+}
+
+.dash-empty-small {
+  font-size: 13px;
+  color: #77736c;
+  margin: 4px 0;
+}
+
+.dash-more {
+  display: block;
+  width: 100%;
+  margin-top: 10px;
+  padding: 10px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  color: #55524c;
+  background: #f6f5f2;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.dash-more:hover {
+  color: #111;
+}
