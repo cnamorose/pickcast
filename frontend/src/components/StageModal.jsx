@@ -44,14 +44,10 @@ function CompareModal({ items, onClose }) {
             </div>
             <dl className="compare-rows">
               <div>
-                <dt>종류</dt>
+                <dt>종류 · 색상</dt>
                 <dd>
-                  {CATEGORY_LABELS[p.category]} · {p.type}
+                  {CATEGORY_LABELS[p.category]} · {p.type} · {p.color}
                 </dd>
-              </div>
-              <div>
-                <dt>색상</dt>
-                <dd>{p.color}</dd>
               </div>
               <div>
                 <dt>정보</dt>
