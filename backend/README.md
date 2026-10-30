@@ -218,3 +218,25 @@ python backend/scripts/export_sessions.py --output exports/a.csv   # 저장 위�
 * 모든 세션을 내보내고, 무엇을 학습에 쓸지는 ml 쪽 정제 기준이 정합니다.
 * 결제 없이 탭을 닫은 세션은 DB에서 계속 `active`로 남습니다. 마지막 기록 후 60분(`EXPIRE_AFTER_MINUTES`)이 지난 `active` 세션은 내보낼 때 `abandoned`로 봅니다. DB 값은 바꾸지 않습니다.
 * 기본 저장 위치(`ml/data/`)는 Git에 올라가지 않습니다.
+
+## 재학습 한 번 실행
+
+내보내기와 ml 재학습 파이프라인을 한 번에 실행합니다. 배포 후 서버의 주기 실행(cron 등)에는 이 명령 하나만 등록하면 됩니다.
+
+```powershell
+python backend/scripts/run_retrain.py              # 스위치(ml/pipeline_config.json)에 따라 실행
+python backend/scripts/run_retrain.py --dry-run    # 스위치와 상관없이 평가까지만
+```
+
+* 재학습 여부(`retrain_enabled`)와 자동 반영(`auto_release`)은 파이프라인이 `ml/pipeline_config.json`을 보고 정합니다. 스위치가 꺼져 있으면 내보내기만 하고 멈춥니다.
+* 종료 코드: 정상적으로 멈추면(스위치 꺼짐, 세션 부족, 등록 기준 미통과, 등록, 반영) 0, DB 연결 실패 등 오류면 1
+* 처음 한 번 `python ml/product_purchase/pipeline.py --build-reference`로 참조 파일을 만들어야 합니다 (`ml/README.md` 참고).
+
+## 모델 자동 교체
+
+백엔드는 `ml/models/current.json`이 가리키는 모델 버전을 씁니다 (`backend/app/ml.py`).
+
+* 5초(`CHECK_EVERY_SECONDS`)마다 `current.json`을 확인해, 버전이 바뀌었으면 **재시작 없이** 새 모델을 불러옵니다. `release.py use`로 바꾸거나 파이프라인이 자동 반영하면 몇 초 안에 적용됩니다.
+* 새 버전을 불러오다 실패하면(폴더가 깨졌다든지) 이전 모델을 계속 쓰고, 이유를 `/health`의 `model_error`에 보여줍니다.
+* 지금 쓰는 버전은 `/health`의 `model_version`에서 확인할 수 있고, 새 세션의 `model_version`에도 기록됩니다.
+* 한 요청 안에서는 모델을 한 번만 꺼내 같은 버전으로 계산합니다.

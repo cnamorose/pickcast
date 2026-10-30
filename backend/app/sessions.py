@@ -6,7 +6,7 @@ from pydantic import BaseModel
 from sqlmodel import Session, select
 
 from .db import get_db
-from .ml import FEATURE_LABELS, MODEL_VERSION, judge_stage, predictor
+from .ml import FEATURE_LABELS, get_predictor, judge_stage
 from .models import Purchase, ShoppingSession, View, utc_now
 
 router = APIRouter(prefix="/sessions", tags=["sessions"])
@@ -59,7 +59,7 @@ def create_session(request: CreateSessionRequest, db: Session = Depends(get_db))
             previous.ended_at = utc_now()
             db.add(previous)
 
-    session = ShoppingSession(model_version=MODEL_VERSION, mode=request.mode)
+    session = ShoppingSession(model_version=get_predictor().version, mode=request.mode)
     db.add(session)
     db.commit()
 
@@ -75,6 +75,7 @@ def add_view(session_id: str, request: ItemRequest, db: Session = Depends(get_db
     db.flush()
 
     views = load_views(db, session_id)
+    predictor = get_predictor()
     stage = judge_stage(predictor.timeline(views), predictor.base_probability)
     view.stage = stage["stage"]
     db.add(view)
@@ -132,6 +133,7 @@ def get_predictions(session_id: str, db: Session = Depends(get_db)):
     purchased_item = purchase.item_id if purchase else None
     scored_views = views_before_decision(views, purchased_item) if purchase else views
 
+    predictor = get_predictor()
     return {
         # 결제하러 들어간 마지막 방문 직전 기준의 예측. 남는 조회가 없으면 null
         "prediction": predictor.predict(scored_views) if scored_views else None,
