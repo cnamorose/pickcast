@@ -109,6 +109,8 @@ docker compose up -d
 | `GET /peak-simulation` | 피크타임 우선 처리 시뮬레이션 결과. 선착순·확률 우선·에이징의 test 비교와 valid·test α 곡선 |
 | `GET /peak-simulation/windows` | 재생할 수 있는 시간대 목록 |
 | `GET /peak-simulation/replay` | 시간대 하나를 한 방식으로 재생한 도착·처리·이탈 사건과 요약 |
+| `GET /guess-game/start` | 구매 맞히기 게임(사람 vs AI) 시작. 난이도 1·2·3 문제 하나씩 (정답 제외) |
+| `POST /guess-game/answer` | 고른 상품을 받아 정답과 AI 예측(후보별 확률 순위)을 돌려줌 |
 
 ### 구매 의도 단계 (`stage`)
 
@@ -253,6 +255,38 @@ GET /peak-simulation/replay?window=3&policy=priority&alpha=0&overload=1.5
 
 * 선착순과 우선 처리를 나란히 보여줄 때는 `policy`만 바꿔 두 번 호출합니다. 같은 시간대는 같은 손님들입니다.
 * **시간대 하나는 구매 고객이 7~8명뿐이라 결과가 크게 흔들립니다.** 선택한 α=20이 선착순보다 나쁜 시간대도 있습니다. 재생 화면은 처리되는 모습을 보여주는 용도로 쓰고, 효과는 `/peak-simulation`의 전체 결과로 보여주세요. `/windows` 응답의 `note`에 안내 문구가 있습니다.
+
+### 구매 맞히기 게임 (`/guess-game`)
+
+RetailRocket test 사용자의 실제 조회 기록을 보고 "이 사람이 산 상품"을 사람과 AI가 각자 맞히는 추가 체험입니다. test 사용자는 모델이 학습에서 보지 않은 사람들입니다. 문제는 ml 쪽에서 미리 만들고(`ml/product_purchase/guess_game.py`), 이 API는 `ml/results/guess_problems.json`을 요청마다 읽습니다. 파일이 없으면 404입니다.
+
+`GET /guess-game/start`는 난이도 1·2·3 문제를 하나씩 무작위로 고릅니다. `seed`를 주면 같은 문제가 나옵니다.
+
+```json
+{
+  "rounds": [
+    {
+      "problem_id": 12,
+      "level": 1,
+      "views": [{ "seconds": 0, "item_id": 437293 }, { "seconds": 95, "item_id": 309139 }],
+      "items": [437293, 309139]
+    }
+  ],
+  "seconds_per_round": 30,
+  "ai_accuracy": { "1": { "problems": 84, "ai_hits": 81, "ai_rate": 0.9643 } },
+  "settings": { "model_version": "product_purchase_v2" }
+}
+```
+
+* `views`의 `seconds`는 첫 조회 후 경과 초, `items`는 본 상품을 처음 본 순서대로 중복 없이 담습니다. 정답은 보내지 않습니다.
+* `ai_accuracy`는 난이도별 전체 문제에서 AI가 1순위로 맞힌 비율이고, `settings.model_version` 모델로 계산했습니다.
+
+`POST /guess-game/answer`에 `{ "problem_id": 12, "pick": 437293 }`을 보내면 정답과 AI 결과를 돌려줍니다. 시간 안에 고르지 않았으면 `pick`을 빼고 보내고(오답 처리), 본 상품이 아닌 번호를 보내면 400입니다.
+
+* `answer`, `correct`, `timed_out`: 정답과 사람의 결과
+* `ai.pick`, `ai.correct`: AI 1순위와 정답 여부. AI는 지금 백엔드가 쓰는 모델로 계산합니다(`ai.model_version`).
+* `ai.candidates`: 후보별 `rank`, `probability`, `lift`(한 번만 봤을 때 대비 배수), `facts`(조회 수, 재방문 수, 마지막 조회 후 경과 초), `reasons`(구매 쪽으로 가장 크게 기여한 요인 2개)
+* 상품은 번호뿐이라, 화면에서는 쇼핑몰 상품 이미지를 임의로 붙여 보여주고 그렇다는 안내를 넣습니다.
 
 ## 재학습용 체험 기록 내보내기
 
