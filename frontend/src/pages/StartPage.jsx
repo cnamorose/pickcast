@@ -42,6 +42,10 @@ export default function StartPage() {
         <button className="btn btn-white" onClick={handleStart}>
           시작하기
         </button>
+        {/* 실제 쇼핑 기록으로 산 상품을 맞히는 게임(사람 vs AI). 세션을 만들지 않는다. */}
+        <button className="btn btn-outline-white" onClick={() => navigate("/guess")}>
+          AI와 대결
+        </button>
         {/* 쇼핑 체험과 별개인 시뮬레이션 화면. 세션을 만들지 않는다. */}
         <button className="btn btn-outline-white" onClick={() => navigate("/peak")}>
           피크타임 시뮬레이션
