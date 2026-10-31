@@ -92,7 +92,7 @@ export default function FinalBoard({ game, results, productOf, onRestart }) {
           다시 하기
         </button>
         <Link to="/" className="btn guess-btn-outline">
-          처음으로
+          게임 종료
         </Link>
       </div>
     </section>
