@@ -2,26 +2,26 @@
 .peak-page {
   --peak-card: #fff;
   --peak-soft: #f4f4f2;
-  /* 색 기준: Honeydew #F6FFEA, Soft Peach #FFDE96, Coral Glow #FA855A, Tomato Jam #C93638, Sky Blue #62C4DA.
-     칸 바탕에는 색을 쓰지 않고(흰색), 보조 버튼은 연한 Soft Peach로 썼다.
-     그래프 선에는 Sky Blue를 조금 진하게(#4FB8D1) 써야 흰 바탕에서 구분된다 (PeakPage.jsx의 COLORS와 같은 값) */
+  /* 색 기준: 쇼핑 화면(styles.css)과 같은 팔레트 Rhythm #766DA7, Eerie Black #15191E, Camouflage Green #7A9663,
+     Ebony #556842, Laurel Green #A0AE91. 그래프와 칸 띠에는 같은 계열을 조금 진하게 썼다
+     (우선 처리 보라 #6F62B8, 선착순 초록 #6B9A4C. PeakPage.jsx의 COLORS와 같은 값) */
   --peak-panel: #fff; /* 칸은 모두 흰색, 테두리와 옅은 그림자로 구분 */
-  --peak-metric-bg: #eef6f9; /* 결과 탭 지표 카드: 아주 연한 Sky */
-  --peak-ink: #222; /* 주요 버튼, 선택된 탭, 제목 */
-  --peak-button: #fff4de; /* 연한 Soft Peach: 보조 버튼 바탕 */
-  --peak-button-line: #f3d9a4;
-  --peak-line: #e2e2de;
-  --peak-dim: #6b6b6b;
-  --peak-high: #fa855a;
-  --peak-fifo: #4fb8d1;
-  --peak-priority-tint: #fffbf9; /* 아주 연한 Coral: 우선 처리 칸 바탕 */
-  --peak-priority-soft: #fff2ec; /* 떠남 알림(--peak-left-tint)과 헷갈리지 않게 아주 연하게 */
-  --peak-left-tint: #fbe6e5;
-  --peak-good-tint: #e3f4f8;
-  --peak-good: #1e6e82;
-  --peak-mid: #ffde96;
-  --peak-low: #d6e9ef;
-  --peak-left: #c93638;
+  --peak-metric-bg: #f3f5f0; /* 결과 탭 지표 카드: 아주 연한 Laurel Green */
+  --peak-ink: #15191e; /* Eerie Black: 주요 버튼, 선택된 탭, 제목 */
+  --peak-button: #efedf6; /* 연한 Rhythm: 보조 버튼 바탕 */
+  --peak-button-line: #d6d2e8;
+  --peak-line: #dfe3da;
+  --peak-dim: #5f646a;
+  --peak-high: #6f62b8;
+  --peak-fifo: #6b9a4c;
+  --peak-priority-tint: #faf9fd; /* 아주 연한 Rhythm: 우선 처리 칸 바탕 */
+  --peak-priority-soft: #f1effa;
+  --peak-left-tint: #f6e3e2;
+  --peak-good-tint: #edf2e8;
+  --peak-good: #556842;
+  --peak-mid: #cfc9ea;
+  --peak-low: #e4e8df;
+  --peak-left: #b2302f;
   /* 화면 너비를 다 쓴다 (양옆은 페이지 패딩만) */
   --peak-width: 100%;
   min-height: 100vh;
@@ -424,7 +424,7 @@
 
 .peak-chip-high {
   background: var(--peak-high);
-  color: #111;
+  color: #fff;
 }
 
 .peak-chip-mid {

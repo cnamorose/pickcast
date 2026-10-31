@@ -1,13 +1,13 @@
 /* 판매자 대시보드 전용 스타일. 쇼핑몰 화면과 섞이지 않게 dash- 접두사를 쓴다. */
 .dash-page {
   min-height: 100vh;
-  background: #f6f5f2;
-  color: #111;
+  background: var(--bg-soft);
+  color: var(--ink);
   padding: 0 24px 48px;
 }
 
 .dash-muted {
-  color: #77736c;
+  color: var(--ink-3);
   font-size: 13px;
 }
 
@@ -47,8 +47,8 @@
   gap: 6px;
   font-size: 12px;
   font-weight: 700;
-  color: #1e7a4c;
-  background: #e5f4ec;
+  color: var(--green-ink);
+  background: var(--green-soft);
   padding: 5px 10px;
   border-radius: 999px;
 }
@@ -63,8 +63,8 @@
 }
 
 .dash-live-off {
-  color: #77736c;
-  background: #ebe9e4;
+  color: var(--ink-3);
+  background: var(--line);
 }
 
 .dash-live-off::before {
@@ -83,14 +83,14 @@
   font-weight: 600;
   padding: 8px 14px;
   border-radius: 8px;
-  border: 1px solid #dcd9d2;
+  border: 1px solid var(--line);
   background: #fff;
-  color: #111;
+  color: var(--ink);
   cursor: pointer;
 }
 
 .dash-btn:hover {
-  border-color: #111;
+  border-color: var(--ink);
 }
 
 /* 레이아웃 */
@@ -119,7 +119,7 @@
 
 .dash-card {
   background: #fff;
-  border: 1px solid #e6e4df;
+  border: 1px solid var(--line);
   border-radius: 12px;
   padding: 20px;
 }
@@ -154,7 +154,7 @@
   column-gap: 8px;
   padding: 12px 14px;
   border-radius: 10px;
-  background: #f6f5f2;
+  background: var(--bg-soft);
 }
 
 .dash-stage-tile b {
@@ -167,7 +167,7 @@
 
 .dash-stage-label {
   font-size: 13px;
-  color: #55524c;
+  color: var(--ink-2);
 }
 
 .dash-dot {
@@ -181,7 +181,7 @@
   height: 10px;
   border-radius: 999px;
   overflow: hidden;
-  background: #ebe9e4;
+  background: var(--line);
   gap: 2px;
 }
 
@@ -197,7 +197,7 @@
   align-items: center;
   gap: 6px;
   font-size: 13px;
-  color: #55524c;
+  color: var(--ink-2);
   cursor: pointer;
 }
 
@@ -213,15 +213,15 @@
   font-size: 13px;
   padding: 6px 12px;
   border-radius: 999px;
-  border: 1px solid #e6e4df;
+  border: 1px solid var(--line);
   background: #fff;
-  color: #55524c;
+  color: var(--ink-2);
   cursor: pointer;
 }
 
 .dash-tab-active {
-  background: #111;
-  border-color: #111;
+  background: var(--ink);
+  border-color: var(--ink);
   color: #fff;
   font-weight: 700;
 }
@@ -240,15 +240,15 @@
   text-align: left;
   font-size: 12px;
   font-weight: 600;
-  color: #77736c;
+  color: var(--ink-3);
   padding: 8px 10px;
-  border-bottom: 1px solid #e6e4df;
+  border-bottom: 1px solid var(--line);
   white-space: nowrap;
 }
 
 .dash-table td {
   padding: 10px;
-  border-bottom: 1px solid #f0eee9;
+  border-bottom: 1px solid var(--bg-soft);
   vertical-align: middle;
   white-space: nowrap;
 }
@@ -278,7 +278,7 @@
   flex: 1;
   height: 8px;
   border-radius: 999px;
-  background: #f0eee9;
+  background: var(--bg-soft);
   overflow: hidden;
 }
 
@@ -286,7 +286,7 @@
   display: block;
   height: 100%;
   border-radius: 999px;
-  background: #c8553d;
+  background: var(--accent);
 }
 
 .dash-product {
@@ -302,14 +302,14 @@
 
 .dash-product span {
   font-size: 12px;
-  color: #77736c;
+  color: var(--ink-3);
 }
 
 .dash-thumb {
   flex: none;
   object-fit: cover;
   border-radius: 6px;
-  background: #f0eee9;
+  background: var(--bg-soft);
 }
 
 .dash-badge {
@@ -321,19 +321,19 @@
 }
 
 .dash-badge-out {
-  background: #fbe6e5;
-  color: #b2302f;
+  background: var(--danger-soft);
+  color: var(--danger);
 }
 
 .dash-badge-low {
-  background: #fff1d6;
-  color: #9a6a12;
+  background: var(--warn-soft);
+  color: var(--warn-ink);
 }
 
 .dash-footnote {
   margin: 12px 0 0;
   font-size: 12px;
-  color: #77736c;
+  color: var(--ink-3);
 }
 
 /* 인사이트 */
@@ -349,8 +349,8 @@
 .dash-insight {
   padding: 12px 14px;
   border-radius: 10px;
-  background: #f6f5f2;
-  border-left: 4px solid #b9b5ad;
+  background: var(--bg-soft);
+  border-left: 4px solid #a0ae91;
 }
 
 .dash-insight p {
@@ -365,23 +365,23 @@
 }
 
 .dash-tone-warn {
-  border-left-color: #d9a441;
+  border-left-color: var(--warn);
 }
 
 .dash-tone-warn .dash-insight-tag {
-  color: #9a6a12;
+  color: var(--warn-ink);
 }
 
 .dash-tone-info {
-  border-left-color: #3a7ca5;
+  border-left-color: var(--accent);
 }
 
 .dash-tone-info .dash-insight-tag {
-  color: #24627e;
+  color: var(--accent);
 }
 
 .dash-tone-muted .dash-insight-tag {
-  color: #77736c;
+  color: var(--ink-3);
 }
 
 .dash-insight-items {
@@ -405,7 +405,7 @@
   align-items: center;
   gap: 10px;
   padding: 8px 0;
-  border-bottom: 1px solid #f0eee9;
+  border-bottom: 1px solid var(--bg-soft);
 }
 
 .dash-pairs li:last-child {
@@ -417,7 +417,7 @@
   height: 22px;
   flex: none;
   border-radius: 50%;
-  background: #111;
+  background: var(--ink);
   color: #fff;
   font-size: 12px;
   font-weight: 700;
@@ -451,7 +451,7 @@
   max-width: 1280px;
   margin: 0 auto 20px;
   background: #fff;
-  border: 1px dashed #d4d0c7;
+  border: 1px dashed var(--line);
   border-radius: 12px;
   padding: 18px 20px;
 }
@@ -459,11 +459,11 @@
 .dash-empty p {
   margin: 6px 0 0;
   font-size: 14px;
-  color: #55524c;
+  color: var(--ink-2);
 }
 
 .dash-empty code {
-  background: #f0eee9;
+  background: var(--bg-soft);
   padding: 2px 6px;
   border-radius: 4px;
   font-size: 13px;
@@ -471,7 +471,7 @@
 
 .dash-empty-small {
   font-size: 13px;
-  color: #77736c;
+  color: var(--ink-3);
   margin: 4px 0;
 }
 
@@ -483,13 +483,13 @@
   font-family: inherit;
   font-size: 13px;
   font-weight: 600;
-  color: #55524c;
-  background: #f6f5f2;
+  color: var(--ink-2);
+  background: var(--bg-soft);
   border: none;
   border-radius: 8px;
   cursor: pointer;
 }
 
 .dash-more:hover {
-  color: #111;
+  color: var(--ink);
 }
