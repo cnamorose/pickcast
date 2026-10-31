@@ -234,10 +234,24 @@ CSV(`timestamp`, `itemid` 컬럼)로 결과를 바로 확인할 수도 있습니
 - 재생 화면용 파일은 `--replay-assets`로 만듭니다. test의 붐비는 시간대 5개 요청(`ml/results/peak_replay_windows.json`)을 저장하고 요약에 test α 곡선을 더하며, test를 다시 평가하지 않습니다. 백엔드 재생 API는 `replay()`로 시간대 하나를 재생해 도착·처리·이탈 사건을 받습니다.
 - 학습 데이터(`ml/data/product_purchase/training_rows/`)가 있어야 실행됩니다.
 
-### 10. 테스트
+### 10. 구매 맞히기 게임 문제
+
+추가 체험(사람 vs AI)에 쓸 문제를 test 사용자의 실제 조회 기록으로 만듭니다. test 사용자는 모델이 학습에서 보지 않았으므로 AI도 처음 보는 기록으로 맞힙니다.
+
+```powershell
+.\ml\.venv\Scripts\python.exe ml/product_purchase/guess_game.py
+```
+
+- 첫 구매 전 조회만 쓰고 장바구니 기록은 쓰지 않습니다. 결제하러 들어간 마지막 조회는 결과 화면과 같은 규칙으로 뺍니다.
+- 산 상품이 남은 조회 안에 있고, 본 상품 2~6종류, 조회 20개 이하, 첫 조회부터 24시간 안에 끝난 기록만 씁니다.
+- 난이도는 조회 기록만으로 정합니다. 1점에서 시작해 산 상품이 혼자 가장 많이 본 상품이 아니면 +1, 본 상품이 4종류 이상이면 +1입니다.
+- 문제 파일(`ml/results/guess_problems.json`, 약 34KB)은 백엔드가 읽도록 Git으로 관리합니다. 상품 번호, 첫 조회 후 경과 초, 정답, 난이도만 담고 사용자 번호는 담지 않습니다. 난이도별 AI 1순위 정답률을 만들 때의 모델 버전과 함께 저장합니다.
+- 원본 이벤트(`ml/data/raw/events.csv`)와 test 학습 데이터가 있어야 실행됩니다.
+
+### 11. 테스트
 
 ```powershell
 .\ml\.venv\Scripts\python.exe -m unittest discover -s ml/product_purchase/tests -t ml/product_purchase -v
 ```
 
-`test_features.py`는 손으로 만든 조회 기록으로 피처 정의를 확인합니다. `test_predict.py`는 Git에 포함된 확정 모델로 추론 결과의 형식과 일관성을 확인합니다. `test_release.py`는 임시 폴더로 버전 반영·되돌리기를 확인하고, `current.json`이 쓸 수 있는 버전을 가리키는지 확인합니다. `test_stage.py`의 시나리오 테스트는 `ml/models/`에 등록된 모든 버전으로 단계 판단을 확인하므로, 새 버전을 등록하면 단계 기준값이 그 버전에서도 통하는지 바로 드러납니다. `test_recalibrate.py`는 재보정의 등록 기준을 확인합니다. `test_experience.py`는 체험 기록 정제·학습 행·스위치를, `test_pipeline.py`는 임시 폴더와 가짜 체험 기록으로 파이프라인의 단계별 멈춤·등록·반영을 확인합니다. `test_peak_simulation.py`는 손으로 만든 요청으로 처리 순서, 이탈, 에이징을 확인합니다.
+`test_features.py`는 손으로 만든 조회 기록으로 피처 정의를 확인합니다. `test_predict.py`는 Git에 포함된 확정 모델로 추론 결과의 형식과 일관성을 확인합니다. `test_release.py`는 임시 폴더로 버전 반영·되돌리기를 확인하고, `current.json`이 쓸 수 있는 버전을 가리키는지 확인합니다. `test_stage.py`의 시나리오 테스트는 `ml/models/`에 등록된 모든 버전으로 단계 판단을 확인하므로, 새 버전을 등록하면 단계 기준값이 그 버전에서도 통하는지 바로 드러납니다. `test_recalibrate.py`는 재보정의 등록 기준을 확인합니다. `test_experience.py`는 체험 기록 정제·학습 행·스위치를, `test_pipeline.py`는 임시 폴더와 가짜 체험 기록으로 파이프라인의 단계별 멈춤·등록·반영을 확인합니다. `test_peak_simulation.py`는 손으로 만든 요청으로 처리 순서, 이탈, 에이징을 확인합니다. `test_guess_game.py`는 손으로 만든 조회 기록으로 게임 문제 기준과 난이도를 확인합니다.
