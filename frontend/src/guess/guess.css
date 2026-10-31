@@ -1,0 +1,820 @@
+/* 구매 맞히기 게임 화면 전용 스타일. 쇼핑몰 화면과 섞이지 않게 guess- 접두사를 쓴다.
+   색은 styles.css의 팔레트 변수(--ink, --accent, --green, --danger, --warn 등)를 그대로 쓴다. */
+.guess-page {
+  min-height: 100vh;
+  background: var(--bg-soft);
+  color: var(--ink);
+  padding: 12px 16px 32px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.guess-page > * {
+  width: 100%;
+  max-width: 1100px;
+}
+
+.guess-topbar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-height: 60px;
+  border-bottom: 1px solid var(--line);
+}
+
+.guess-topbar h1 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 800;
+}
+
+.guess-back {
+  color: var(--ink-2);
+  font-size: 14px;
+}
+
+.guess-panel {
+  position: relative;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  box-shadow: 0 1px 4px rgba(21, 25, 30, 0.06);
+  padding: 20px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+
+.guess-panel h2,
+.guess-panel h3 {
+  margin: 0;
+}
+
+.guess-panel h3 {
+  font-size: 16px;
+}
+
+.guess-hint {
+  margin: 0;
+  font-size: 13px;
+  color: var(--ink-3);
+}
+
+.guess-round-no {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.guess-level {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--warn-ink);
+}
+
+.guess-level-off {
+  color: var(--line);
+}
+
+.guess-btn-outline {
+  background: #fff;
+  color: var(--ink);
+  border: 1px solid var(--line);
+}
+
+/* ---------- 안내 ---------- */
+.guess-intro ul {
+  margin: 0;
+  padding-left: 18px;
+  line-height: 1.8;
+  color: var(--ink-2);
+}
+
+.guess-intro .btn {
+  align-self: flex-start;
+}
+
+.guess-error {
+  margin: 0;
+  color: var(--danger);
+}
+
+/* ---------- 나 vs AI 점수판 ---------- */
+.guess-vs {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 20px;
+  border-radius: 12px;
+  background: var(--ink);
+  color: #fff;
+  position: relative;
+}
+
+.guess-vs-side {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.guess-vs-side.is-ai {
+  flex-direction: row-reverse;
+}
+
+.guess-vs-name {
+  font-size: 14px;
+  font-weight: 700;
+  opacity: 0.85;
+}
+
+.guess-vs-side b {
+  font-size: 30px;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.guess-vs-mark {
+  font-size: 20px;
+  font-weight: 900;
+  color: var(--warn);
+  letter-spacing: 2px;
+}
+
+.guess-vs-max {
+  position: absolute;
+  right: 14px;
+  bottom: 4px;
+  font-size: 10px;
+  opacity: 0.5;
+}
+
+.guess-dots {
+  display: flex;
+  gap: 4px;
+}
+
+.guess-dot {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  background: rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.guess-dot.is-now {
+  background: var(--warn);
+  color: var(--ink);
+}
+
+.guess-dot.is-hit {
+  background: var(--green);
+  color: #fff;
+}
+
+.guess-dot.is-miss {
+  background: var(--danger);
+  color: #fff;
+}
+
+/* ---------- 라운드 소개와 3·2·1 ---------- */
+.guess-countdown {
+  align-items: center;
+  text-align: center;
+  padding: 48px 20px;
+}
+
+.guess-count {
+  font-size: 96px;
+  line-height: 1;
+  color: var(--accent);
+  animation: guess-pop 0.7s ease-out;
+}
+
+@keyframes guess-pop {
+  from {
+    transform: scale(1.6);
+    opacity: 0;
+  }
+}
+
+/* ---------- 라운드 ---------- */
+.guess-round {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.guess-round-head {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px 20px;
+}
+
+.guess-timer {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 240px;
+}
+
+.guess-timer-bar {
+  flex: 1;
+  height: 10px;
+  border-radius: 999px;
+  background: var(--line);
+  overflow: hidden;
+}
+
+.guess-timer-bar i {
+  display: block;
+  height: 100%;
+  background: var(--green);
+  transition: width 0.2s linear;
+}
+
+.guess-timer b {
+  font-variant-numeric: tabular-nums;
+  min-width: 56px;
+  text-align: right;
+  font-size: 14px;
+}
+
+.guess-timer.is-waiting b {
+  color: var(--ink-3);
+  font-weight: 500;
+}
+
+.guess-timer.is-urgent {
+  animation: guess-shake 0.4s infinite;
+}
+
+.guess-timer.is-urgent .guess-timer-bar i {
+  background: var(--danger);
+}
+
+.guess-timer.is-urgent b {
+  color: var(--danger);
+}
+
+@keyframes guess-shake {
+  25% {
+    transform: translateX(-2px);
+  }
+  75% {
+    transform: translateX(2px);
+  }
+}
+
+/* 지금 장면을 말해 주는 말풍선 */
+.guess-bubble {
+  align-self: flex-start;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 15px;
+  font-weight: 700;
+  animation: guess-in 0.3s ease-out;
+}
+
+@keyframes guess-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+
+/* 상품 보드: 손님이 오가며 조회 수가 쌓인다 */
+.guess-board {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 12px;
+}
+
+.guess-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 10px;
+  border: 2px solid var(--line);
+  border-radius: 12px;
+  background: #fff;
+  color: var(--ink);
+  font-size: 13px;
+  cursor: pointer;
+  transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
+}
+
+/* 재생 중에는 누를 수 없지만 흐리게 하지는 않는다 */
+.guess-card:disabled {
+  cursor: default;
+  color: var(--ink);
+}
+
+.guess-card img {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+.guess-card-name {
+  font-weight: 600;
+}
+
+.guess-views {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+}
+
+/* 많이 볼수록 진하게 빛난다 */
+.guess-card.is-seen .guess-views {
+  color: var(--ink-2);
+}
+
+.guess-card.is-warm {
+  box-shadow: 0 0 0 3px var(--warn-soft);
+}
+
+.guess-card.is-warm .guess-views {
+  color: var(--warn-ink);
+}
+
+.guess-card.is-hot {
+  box-shadow: 0 0 0 4px var(--warn), 0 6px 16px rgba(217, 164, 65, 0.35);
+}
+
+.guess-card.is-hot .guess-views {
+  color: var(--warn-ink);
+}
+
+.guess-card.is-here {
+  border-color: var(--accent);
+  transform: translateY(-4px);
+}
+
+.guess-shopper {
+  position: absolute;
+  top: -16px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 26px;
+  animation: guess-in 0.25s ease-out;
+}
+
+.guess-card:hover:not(:disabled) {
+  border-color: var(--accent-line);
+}
+
+.guess-card.is-selected {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+/* 조회 순서 줄 */
+.guess-path {
+  list-style: none;
+  margin: 0;
+  padding: 8px 0 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 0;
+  border-top: 1px dashed var(--line);
+}
+
+.guess-path li {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 0 10px 0 4px;
+  position: relative;
+}
+
+.guess-path li + li::before {
+  content: "→";
+  position: absolute;
+  left: -8px;
+  top: 8px;
+  font-size: 12px;
+  color: var(--ink-3);
+}
+
+.guess-path img {
+  width: 32px;
+  height: 32px;
+  object-fit: cover;
+  border-radius: 6px;
+  border: 2px solid transparent;
+}
+
+.guess-path li.is-again img {
+  border-color: var(--accent);
+}
+
+.guess-path small {
+  font-size: 10px;
+  color: var(--ink-3);
+  white-space: nowrap;
+}
+
+.guess-round-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.guess-ai-status {
+  font-size: 13px;
+  color: var(--ink-3);
+  animation: guess-blink 1.2s infinite;
+}
+
+@keyframes guess-blink {
+  50% {
+    opacity: 0.4;
+  }
+}
+
+.guess-decide {
+  margin-left: auto;
+  min-width: 180px;
+}
+
+/* ---------- 라운드 결과 ---------- */
+.guess-result {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.guess-answer {
+  align-items: center;
+  text-align: center;
+}
+
+.guess-reveals {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  width: 100%;
+}
+
+/* 나와 AI의 선택을 뒤집어 공개 */
+.guess-reveal {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 12px;
+  border-radius: 12px;
+  animation: guess-flip 0.6s ease-out both;
+}
+
+@keyframes guess-flip {
+  from {
+    transform: rotateY(90deg);
+    opacity: 0;
+  }
+}
+
+.guess-reveal.is-hit {
+  background: var(--green-soft);
+  color: var(--green-ink);
+}
+
+.guess-reveal.is-miss {
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
+.guess-reveal-who {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.guess-reveal img,
+.guess-reveal-empty {
+  width: 110px;
+  aspect-ratio: 1;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+.guess-reveal-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 40px;
+  background: #fff;
+}
+
+.guess-reveal-name {
+  font-size: 13px;
+  color: var(--ink-2);
+}
+
+.guess-reveal b {
+  font-size: 18px;
+}
+
+.guess-answer-line {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 15px;
+}
+
+.guess-answer-line img {
+  width: 44px;
+  height: 44px;
+  object-fit: cover;
+  border-radius: 6px;
+}
+
+.guess-ai-comment {
+  margin: 0;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: var(--bg-soft);
+  font-size: 14px;
+  line-height: 1.5;
+  text-align: left;
+  align-self: stretch;
+}
+
+.guess-ranking {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.guess-ranking li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+}
+
+.guess-ranking li.is-answer {
+  border-color: var(--green);
+  background: var(--green-soft);
+}
+
+.guess-ranking img {
+  width: 40px;
+  height: 40px;
+  border-radius: 6px;
+  object-fit: cover;
+}
+
+.guess-rank {
+  width: 22px;
+  font-weight: 800;
+  color: var(--ink-3);
+  text-align: center;
+}
+
+.guess-rank-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.guess-rank-title {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.guess-rank-title em {
+  margin-left: 6px;
+  font-style: normal;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--green-ink);
+}
+
+.guess-rank-body small {
+  font-size: 12px;
+  color: var(--ink-3);
+}
+
+.guess-lift,
+.guess-accuracy-bar {
+  height: 8px;
+  border-radius: 999px;
+  background: var(--bg-soft);
+  overflow: hidden;
+}
+
+.guess-lift i,
+.guess-accuracy-bar i {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--accent);
+}
+
+.guess-lift-value {
+  font-variant-numeric: tabular-nums;
+  min-width: 48px;
+  text-align: right;
+}
+
+.guess-result .btn {
+  align-self: flex-end;
+}
+
+/* ---------- 최종 대시보드 ---------- */
+.guess-final {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.guess-score {
+  align-items: center;
+  text-align: center;
+  overflow: hidden;
+}
+
+.guess-score-row {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+}
+
+.guess-score-row div {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.guess-score-row span {
+  font-size: 14px;
+  color: var(--ink-3);
+}
+
+.guess-score-row b {
+  font-size: 64px;
+  line-height: 1;
+}
+
+.guess-score-row i {
+  font-style: normal;
+  font-size: 40px;
+  color: var(--ink-3);
+}
+
+.guess-score p {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+/* 이겼을 때만 위에서 떨어지는 축하 효과 */
+.guess-confetti {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.guess-confetti span {
+  position: absolute;
+  top: -30px;
+  font-size: 20px;
+  animation: guess-fall 2.4s ease-in forwards;
+}
+
+@keyframes guess-fall {
+  to {
+    transform: translateY(260px) rotate(300deg);
+    opacity: 0;
+  }
+}
+
+.guess-final-rounds {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.guess-final-card {
+  align-items: center;
+  text-align: center;
+}
+
+.guess-final-card img {
+  width: 120px;
+  aspect-ratio: 1;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+.guess-final-card ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.guess-final-card li {
+  font-size: 13px;
+  padding: 6px 10px;
+  border-radius: 8px;
+}
+
+.guess-final-card li.is-hit {
+  background: var(--green-soft);
+  color: var(--green-ink);
+}
+
+.guess-final-card li.is-miss {
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
+.guess-accuracy {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.guess-accuracy div {
+  display: grid;
+  grid-template-columns: 90px 1fr 48px 56px;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+}
+
+.guess-accuracy span {
+  color: var(--warn-ink);
+  font-weight: 700;
+}
+
+.guess-accuracy b {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.guess-accuracy small {
+  color: var(--ink-3);
+}
+
+.guess-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.guess-attribution {
+  margin: 0;
+  font-size: 11px;
+  color: var(--ink-3);
+}
+
+/* ---------- 좁은 화면 ---------- */
+@media (max-width: 760px) {
+  .guess-result,
+  .guess-final-rounds {
+    grid-template-columns: 1fr;
+  }
+  .guess-timer {
+    margin-left: 0;
+    width: 100%;
+  }
+  .guess-vs-name {
+    display: none;
+  }
+  .guess-decide {
+    margin-left: 0;
+    width: 100%;
+  }
+}
