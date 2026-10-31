@@ -12,10 +12,11 @@ import "./dashboard.css";
 const REFRESH_MS = 5000;
 
 const STAGES = [
-  { key: "decided", label: "살 마음 먹음", color: "#c8553d" },
-  { key: "comparing", label: "고민 중", color: "#3a7ca5" },
-  { key: "leaving", label: "떠나려는 중", color: "#d9a441" },
-  { key: "browsing", label: "구경 중", color: "#b9b5ad" },
+  // 팔레트(Rhythm, Camouflage Green)를 그래프에서 구분되게 조금 진하게 쓴 색. 떠나려는 중은 경고 빨강
+  { key: "decided", label: "살 마음 먹음", color: "#6f62b8" },
+  { key: "comparing", label: "고민 중", color: "#6b9a4c" },
+  { key: "leaving", label: "떠나려는 중", color: "#b2302f" },
+  { key: "browsing", label: "구경 중", color: "#b9bdb3" },
 ];
 
 const INSIGHT_LABELS = {
