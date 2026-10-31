@@ -19,7 +19,15 @@
   --warn-soft: #fbf1d9;
   --warn-ink: #8a6410;
   --radius: 10px;
+  --page-gutter: 32px; /* 피크타임·판매자 대시보드처럼 화면 너비를 다 쓰는 페이지의 양옆 여백 */
   --max: 1200px;
+}
+
+/* 휴대폰 너비에서는 양옆 여백을 줄인다 */
+@media (max-width: 600px) {
+  :root {
+    --page-gutter: 16px;
+  }
 }
 
 * {
