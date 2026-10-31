@@ -1,9 +1,10 @@
 /* 판매자 대시보드 전용 스타일. 쇼핑몰 화면과 섞이지 않게 dash- 접두사를 쓴다. */
+/* 피크타임 화면처럼 흰 바탕에 화면 너비를 다 쓴다 (양옆은 페이지 패딩만) */
 .dash-page {
   min-height: 100vh;
-  background: var(--bg-soft);
+  background: #fff;
   color: var(--ink);
-  padding: 0 24px 48px;
+  padding: 0 var(--page-gutter) 32px;
 }
 
 .dash-muted {
@@ -13,7 +14,7 @@
 
 /* 상단 바 */
 .dash-topbar {
-  max-width: 1280px;
+  max-width: none;
   margin: 0 auto;
   display: flex;
   flex-wrap: wrap;
@@ -95,10 +96,10 @@
 
 /* 레이아웃 */
 .dash-grid {
-  max-width: 1280px;
+  max-width: none;
   margin: 0 auto;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 360px;
+  grid-template-columns: minmax(0, 1fr) 400px;
   gap: 20px;
   align-items: start;
 }
@@ -117,11 +118,13 @@
   }
 }
 
+/* 흰 바탕 위에서 구분되게 옅은 그림자를 준다 */
 .dash-card {
   background: #fff;
   border: 1px solid var(--line);
   border-radius: 12px;
   padding: 20px;
+  box-shadow: 0 1px 4px rgba(21, 25, 30, 0.06);
 }
 
 .dash-card-head {
@@ -230,27 +233,71 @@
   overflow-x: auto;
 }
 
+/* 칸 너비 고정: 상품 칸이 남는 너비를 쓰고 나머지는 정해진 너비 */
 .dash-table {
   width: 100%;
-  border-collapse: collapse;
+  min-width: 760px;
+  table-layout: fixed;
+  border-collapse: separate;
+  border-spacing: 0;
   font-size: 14px;
 }
 
+.dash-w-rank {
+  width: 44px;
+}
+
+.dash-w-num {
+  width: 96px;
+}
+
+.dash-w-prob {
+  width: 30%;
+}
+
+.dash-w-expected {
+  width: 150px;
+}
+
+/* 표 안에서 스크롤해도 제목 줄은 위에 붙어 있다 */
 .dash-table th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
   text-align: left;
   font-size: 12px;
-  font-weight: 600;
-  color: var(--ink-3);
-  padding: 8px 10px;
+  font-weight: 700;
+  color: var(--ink-2);
+  background: var(--bg-soft);
+  padding: 10px 12px;
   border-bottom: 1px solid var(--line);
   white-space: nowrap;
 }
 
+.dash-table th:first-child {
+  border-top-left-radius: 8px;
+}
+
+.dash-table th:last-child {
+  border-top-right-radius: 8px;
+}
+
 .dash-table td {
-  padding: 10px;
-  border-bottom: 1px solid var(--bg-soft);
+  padding: 12px;
+  border-bottom: 1px solid var(--line);
   vertical-align: middle;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 줄마다 번갈아 아주 연한 바탕, 마우스를 올린 줄은 연보라 */
+.dash-table tbody tr:nth-child(even) td {
+  background: #fafbf8;
+}
+
+.dash-table tbody tr:hover td {
+  background: var(--accent-soft);
 }
 
 .dash-table .num {
@@ -258,8 +305,9 @@
   font-variant-numeric: tabular-nums;
 }
 
-.dash-col-prob {
-  min-width: 200px;
+.dash-rank-cell {
+  color: var(--ink-3);
+  font-weight: 700;
 }
 
 .dash-prob {
@@ -269,9 +317,21 @@
 }
 
 .dash-prob b {
-  width: 52px;
+  width: 56px;
   text-align: right;
   font-variant-numeric: tabular-nums;
+}
+
+.dash-expected {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+.dash-expected small {
+  font-size: 11px;
+  color: var(--ink-3);
 }
 
 .dash-bar {
@@ -298,6 +358,13 @@
 .dash-product div {
   display: flex;
   flex-direction: column;
+  min-width: 0;
+}
+
+.dash-product b,
+.dash-product span {
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .dash-product span {
@@ -448,7 +515,7 @@
 
 /* 빈 화면 */
 .dash-empty {
-  max-width: 1280px;
+  max-width: none;
   margin: 0 auto 20px;
   background: #fff;
   border: 1px dashed var(--line);
@@ -475,21 +542,45 @@
   margin: 4px 0;
 }
 
-.dash-more {
-  display: block;
-  width: 100%;
-  margin-top: 10px;
-  padding: 10px;
-  font-family: inherit;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--ink-2);
-  background: var(--bg-soft);
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-}
-
-.dash-more:hover {
-  color: var(--ink);
+/* 넓은 화면: 페이지를 화면 높이에 맞추고, 넘치는 건 상품 표와 오른쪽 칸 안에서만 스크롤한다.
+   위쪽의 기본 규칙(.dash-grid의 align-items 등)을 덮어써야 하므로 파일 맨 끝에 둔다. */
+@media (min-width: 1001px) {
+  .dash-page {
+    height: 100vh;
+    height: 100dvh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    padding-bottom: 16px;
+  }
+  /* 세로 배치에서 margin: 0 auto 때문에 내용 폭으로 줄어들지 않게 전체 너비를 쓴다 */
+  .dash-topbar,
+  .dash-grid,
+  .dash-empty {
+    width: 100%;
+  }
+  .dash-grid {
+    flex: 1;
+    min-height: 0;
+    grid-template-rows: minmax(0, 1fr);
+    align-items: stretch;
+  }
+  .dash-main {
+    min-height: 0;
+  }
+  .dash-side {
+    min-height: 0;
+    overflow-y: auto;
+  }
+  .dash-products {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+  .dash-products .dash-table-wrap {
+    flex: 1;
+    min-height: 0;
+    overflow: auto;
+  }
 }
