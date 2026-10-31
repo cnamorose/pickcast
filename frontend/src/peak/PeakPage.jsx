@@ -14,7 +14,7 @@ import "./peak.css";
 const ALPHAS = [0, 0.5, 1, 2, 5, 10, 20, 50, 100];
 const SPEEDS = [1, 2, 4, 8];
 // peak.css의 색 변수와 같은 값 (SVG 그래프에 직접 넣어야 해서 여기에도 둔다)
-const COLORS = { fifo: "#4fb8d1", priority: "#fa855a", aging: "#c93638", left: "#c93638" };
+const COLORS = { fifo: "#6b9a4c", priority: "#6f62b8", aging: "#b2302f", left: "#b2302f" };
 // 처음 들어왔을 때 보여줄 장면 (0부터 센 번호, 화면에는 4번). 다섯 장면 중 선착순과 차이가 가장 잘 보인다.
 // 장면 하나는 예시일 뿐이라 효과 판단은 전체 결과로 하게 안내한다.
 const DEFAULT_WINDOW = 3;
