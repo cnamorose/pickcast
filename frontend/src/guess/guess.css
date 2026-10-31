@@ -16,25 +16,6 @@
   max-width: 1100px;
 }
 
-.guess-topbar {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  min-height: 60px;
-  border-bottom: 1px solid var(--line);
-}
-
-.guess-topbar h1 {
-  margin: 0;
-  font-size: 20px;
-  font-weight: 800;
-}
-
-.guess-back {
-  color: var(--ink-2);
-  font-size: 14px;
-}
-
 .guess-panel {
   position: relative;
   background: #fff;
@@ -79,22 +60,189 @@
   color: var(--line);
 }
 
-.guess-btn-outline {
+/* 공통 .btn(테두리 없음)보다 우선하도록 페이지 이름을 붙인다 */
+.guess-page .guess-btn-outline {
   background: #fff;
   color: var(--ink);
-  border: 1px solid var(--line);
+  border: 1px solid var(--ink-3);
 }
 
-/* ---------- 안내 ---------- */
-.guess-intro ul {
+.guess-page .guess-btn-outline:hover {
+  background: var(--bg-soft);
+}
+
+/* ---------- 첫 화면: 가운데에 제목, 시작·설명·종료 ---------- */
+.guess-page-intro {
+  position: relative;
+  justify-content: center;
+}
+
+/* 첫 화면에서는 안내 문구를 화면 맨 아래 가운데에 둔다 (가운데 정렬을 밀어내지 않게) */
+.guess-page-intro .guess-attribution {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 16px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.guess-intro {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 16px;
+}
+
+/* 글자마다 차례로 통통 튄다. 한 번 출렁인 뒤 잠깐 쉬었다가 다시 반복 */
+.guess-title {
   margin: 0;
-  padding-left: 18px;
-  line-height: 1.8;
+  font-size: 88px;
+  font-weight: 900;
+  letter-spacing: -1px;
+  color: var(--ink);
+}
+
+.guess-title span {
+  display: inline-block;
+  animation: guess-wave 2.6s ease-in-out infinite;
+}
+
+.guess-title span.is-accent {
+  color: var(--accent);
+}
+
+@keyframes guess-wave {
+  0%,
+  30%,
+  100% {
+    transform: translateY(0);
+  }
+  12% {
+    transform: translateY(-18px) rotate(-4deg);
+  }
+  20% {
+    transform: translateY(4px);
+  }
+}
+
+.guess-versus {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.guess-versus span {
+  padding: 8px 20px;
+  border-radius: 999px;
+  background: #fff;
+  border: 1px solid var(--line);
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.guess-versus b {
+  font-size: 22px;
+  font-weight: 900;
+  color: var(--warn);
+  letter-spacing: 2px;
+}
+
+.guess-subtitle {
+  margin: 0;
+  font-size: 18px;
   color: var(--ink-2);
 }
 
-.guess-intro .btn {
-  align-self: flex-start;
+.guess-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 320px;
+  margin-top: 16px;
+}
+
+.guess-menu .btn {
+  width: 100%;
+  padding: 16px 24px;
+  font-size: 17px;
+}
+
+/* 게임 설명 창 */
+/* 페이지 자식에 걸린 최대 너비(1100px)를 풀어야 화면 전체를 덮는다 */
+.guess-page > .guess-modal-overlay {
+  width: auto;
+  max-width: none;
+}
+
+.guess-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background: rgba(21, 25, 30, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.guess-modal {
+  width: 640px;
+  max-width: 100%;
+  padding: 32px 36px 28px;
+  gap: 20px;
+  animation: guess-in 0.2s ease-out;
+}
+
+.guess-modal h2 {
+  font-size: 24px;
+}
+
+/* 규칙마다 아이콘 + 굵은 제목 + 설명 한 줄, 사이를 넉넉히 띄운다 */
+.guess-rules {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.guess-rules li {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.guess-rule-icon {
+  flex: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: var(--bg-soft);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+}
+
+.guess-rules b {
+  display: block;
+  font-size: 16px;
+  margin-bottom: 2px;
+}
+
+.guess-rules p {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--ink-2);
+  word-break: keep-all;
+}
+
+.guess-modal .btn {
+  align-self: flex-end;
 }
 
 .guess-error {
@@ -113,6 +261,8 @@
   background: var(--ink);
   color: #fff;
   position: relative;
+  /* 화면 맨 위에 붙지 않게 띄운다 */
+  margin-top: 32px;
 }
 
 .guess-vs-side {
@@ -767,7 +917,8 @@
   gap: 8px;
 }
 
-.guess-accuracy div {
+/* 줄마다 네 칸. 막대(.guess-accuracy-bar)도 div라 바로 아래 div에만 건다 */
+.guess-accuracy > div {
   display: grid;
   grid-template-columns: 90px 1fr 48px 56px;
   align-items: center;
@@ -802,6 +953,9 @@
 
 /* ---------- 좁은 화면 ---------- */
 @media (max-width: 760px) {
+  .guess-title {
+    font-size: 48px;
+  }
   .guess-result,
   .guess-final-rounds {
     grid-template-columns: 1fr;

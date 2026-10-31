@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { startGuessGame, submitGuess } from "../api/guess";
 import FinalBoard from "./FinalBoard";
 import { assignProducts } from "./products";
@@ -39,9 +39,49 @@ function VsBar({ game, results, index, phase }) {
   );
 }
 
+const TITLE = "AI와 대결";
+// 제목에서 강조색으로 칠할 앞 글자 수 ("AI")
+const TITLE_ACCENT = 2;
+
+// 게임 규칙. 첫 화면의 "게임 설명" 창에서 보여준다. [아이콘, 굵은 제목, 설명]
+const RULES = [
+  ["🛒", "실제 쇼핑 기록", "실제 쇼핑몰(RetailRocket) 고객이 어떤 상품을 몇 번, 어떤 간격으로 봤는지 보여드려요."],
+  ["⏱", "재생을 보고 30초 안에", "손님이 상품 사이를 오가는 모습을 먼저 보고, 30초 안에 산 상품을 골라요. 시간이 지나면 오답이에요."],
+  ["⭐", "난이도만큼 점수", "3라운드, 난이도 ★ → ★★ → ★★★. 맞히면 1·2·3점을 받아요 (6점 만점)."],
+  ["🤖", "공정한 대결", "AI도 같은 기록만 보고 맞혀요. AI가 학습할 때 본 적 없는 사람들의 기록이에요."],
+  ["🔒", "중간에 나갈 수 없어요", "게임을 시작하면 3라운드가 끝날 때까지 이어져요."],
+];
+
+function RulesModal({ onClose }) {
+  return (
+    <div className="guess-modal-overlay" onClick={onClose}>
+      <div className="guess-panel guess-modal" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
+        <h2>게임 설명</h2>
+        <ul className="guess-rules">
+          {RULES.map(([icon, title, desc]) => (
+            <li key={title}>
+              <span className="guess-rule-icon" aria-hidden="true">
+                {icon}
+              </span>
+              <div>
+                <b>{title}</b>
+                <p>{desc}</p>
+              </div>
+            </li>
+          ))}
+        </ul>
+        <button className="btn btn-black" onClick={onClose}>
+          닫기
+        </button>
+      </div>
+    </div>
+  );
+}
+
 // 구매 맞히기 게임 (추가 체험: 사람 vs AI).
 // 쇼핑 체험과 별개라 세션을 만들지 않는다.
-// 안내 → (라운드 → 라운드 결과) × 3 → 최종 대시보드
+// 첫 화면(시작·설명·종료) → (라운드 → 라운드 결과) × 3 → 최종 대시보드.
+// 게임 중에는 나가는 버튼을 두지 않는다. "게임 종료"는 첫 화면과 최종 화면에만 있다.
 export default function GuessPage() {
   const [phase, setPhase] = useState("intro"); // intro | loading | round | result | final
   const [game, setGame] = useState(null);
@@ -49,6 +89,9 @@ export default function GuessPage() {
   const [index, setIndex] = useState(0);
   const [results, setResults] = useState([]);
   const [error, setError] = useState(null);
+  const [showRules, setShowRules] = useState(false);
+  const navigate = useNavigate();
+  const intro = phase === "intro" || phase === "loading";
 
   async function start() {
     setPhase("loading");
@@ -87,33 +130,48 @@ export default function GuessPage() {
   }
 
   return (
-    <div className="guess-page">
-      <header className="guess-topbar">
-        <Link to="/" className="guess-back">
-          ← 처음으로
-        </Link>
-        <h1>AI와 대결: 무엇을 샀을까?</h1>
-      </header>
-
-      {game && phase !== "intro" && phase !== "loading" && (
+    <div className={`guess-page ${intro ? "guess-page-intro" : ""}`}>
+      {game && !intro && (
         <VsBar game={game} results={results} index={index} phase={phase} />
       )}
 
-      {(phase === "intro" || phase === "loading") && (
-        <section className="guess-panel guess-intro">
-          <h2>실제 쇼핑 기록을 보고, 이 사람이 산 상품을 맞혀 보세요</h2>
-          <ul>
-            <li>실제 쇼핑몰(RetailRocket)의 조회 기록이에요. 어떤 상품을 몇 번, 어떤 간격으로 봤는지 보여드려요.</li>
-            <li>손님이 상품 사이를 오가는 모습을 먼저 보여드린 뒤, 30초 안에 산 상품을 골라요.</li>
-            <li>3라운드, 난이도 ★ → ★★ → ★★★. 맞히면 난이도만큼 점수(1·2·3점, 6점 만점)를 받아요.</li>
-            <li>AI도 같은 기록만 보고 맞혀요. AI가 학습할 때 본 적 없는 사람들의 기록이에요.</li>
-          </ul>
+      {intro && (
+        <section className="guess-intro">
+          {/* 글자마다 차례로 통통 튀는 제목 */}
+          <h1 className="guess-title" aria-label={TITLE}>
+            {[...TITLE].map((ch, i) => (
+              <span
+                key={i}
+                aria-hidden="true"
+                className={i < TITLE_ACCENT ? "is-accent" : ""}
+                style={{ animationDelay: `${i * 0.12}s` }}
+              >
+                {ch === " " ? "\u00a0" : ch}
+              </span>
+            ))}
+          </h1>
+          <div className="guess-versus" aria-label="나 대 AI">
+            <span>🙂 나</span>
+            <b>VS</b>
+            <span>🤖 AI</span>
+          </div>
+          <p className="guess-subtitle">실제 쇼핑 기록을 보고, 이 사람이 산 상품을 맞혀 보세요</p>
           {error && <p className="guess-error">{error} — 백엔드 서버가 켜져 있는지 확인해주세요.</p>}
-          <button className="btn btn-black" onClick={start} disabled={phase === "loading"}>
-            {phase === "loading" ? "문제 불러오는 중..." : "게임 시작"}
-          </button>
+          <div className="guess-menu">
+            <button className="btn btn-black" onClick={start} disabled={phase === "loading"}>
+              {phase === "loading" ? "문제 불러오는 중..." : "게임 시작"}
+            </button>
+            <button className="btn guess-btn-outline" onClick={() => setShowRules(true)}>
+              게임 설명
+            </button>
+            <button className="btn guess-btn-outline" onClick={() => navigate("/")}>
+              게임 종료
+            </button>
+          </div>
         </section>
       )}
+
+      {showRules && <RulesModal onClose={() => setShowRules(false)} />}
 
       {phase === "round" && (
         <RoundView

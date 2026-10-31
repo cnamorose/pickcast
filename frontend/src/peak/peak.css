@@ -28,7 +28,7 @@
   background: #fff;
   color: #111;
   /* 세 탭 모두 같은 위치에 상단 바가 오도록 시뮬레이션 탭과 같은 여백을 쓴다 */
-  padding: 12px 16px 32px;
+  padding: 12px var(--page-gutter) 32px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -691,7 +691,7 @@
   height: 100dvh;
   min-height: 0;
   overflow: hidden;
-  padding: 12px 16px;
+  padding: 12px var(--page-gutter);
   gap: 10px;
 }
 

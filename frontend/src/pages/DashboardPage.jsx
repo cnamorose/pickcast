@@ -144,7 +144,6 @@ function ComparePairs({ pairs }) {
 function ProductTable({ products }) {
   const [category, setCategory] = useState("ALL");
   const [onlyViewed, setOnlyViewed] = useState(true);
-  const [showAll, setShowAll] = useState(false);
 
   const rows = useMemo(() => {
     return (products || [])
@@ -154,9 +153,6 @@ function ProductTable({ products }) {
   }, [products, category, onlyViewed]);
 
   const maxProb = Math.max(0.0001, ...rows.map((r) => r.at_least_one));
-  // 기본은 상위 10개만 보여주고, 버튼으로 전체를 펼친다.
-  const TOP_N = 10;
-  const visible = showAll ? rows : rows.slice(0, TOP_N);
 
   return (
     <section className="dash-card dash-products">
@@ -183,24 +179,37 @@ function ProductTable({ products }) {
       {rows.length === 0 ? (
         <p className="dash-empty-small">조건에 맞는 상품이 없어요.</p>
       ) : (
+        // 넓은 화면에서는 이 카드가 화면에 맞춰지고, 표가 넘치면 표 안에서만 스크롤한다
         <div className="dash-table-wrap">
+          {/* 칸 너비를 고정해 필터를 바꿔도 칸이 흔들리지 않게 한다 */}
           <table className="dash-table">
+            <colgroup>
+              <col className="dash-w-rank" />
+              <col />
+              <col className="dash-w-num" />
+              <col className="dash-w-prob" />
+              <col className="dash-w-expected" />
+              <col className="dash-w-num" />
+              <col className="dash-w-num" />
+            </colgroup>
             <thead>
               <tr>
+                <th className="num">#</th>
                 <th>상품</th>
                 <th className="num">보는 고객</th>
-                <th className="dash-col-prob">1명 이상 살 확률</th>
-                <th className="num">예상 구매 (90% 범위)</th>
+                <th>1명 이상 살 확률</th>
+                <th className="num">예상 구매</th>
                 <th className="num">결제 수</th>
                 <th className="num">남은 재고</th>
               </tr>
             </thead>
             <tbody>
-              {visible.map((r) => {
+              {rows.map((r, i) => {
                 const p = getProduct(r.item_id);
                 const left = r.stock - r.purchased;
                 return (
                   <tr key={r.item_id}>
+                    <td className="num dash-rank-cell">{i + 1}</td>
                     <td>
                       <div className="dash-product">
                         <Thumb id={r.item_id} size={36} />
@@ -211,7 +220,7 @@ function ProductTable({ products }) {
                       </div>
                     </td>
                     <td className="num">{r.viewers}명</td>
-                    <td className="dash-col-prob">
+                    <td>
                       <div className="dash-prob">
                         <div className="dash-bar">
                           <span style={{ width: `${(r.at_least_one / maxProb) * 100}%` }} />
@@ -219,8 +228,13 @@ function ProductTable({ products }) {
                         <b>{percent(r.at_least_one)}</b>
                       </div>
                     </td>
-                    <td className="num dash-muted">
-                      {r.expected.toFixed(2)}개 ({r.low}~{r.high})
+                    <td className="num">
+                      <div className="dash-expected">
+                        <b>{r.expected.toFixed(2)}개</b>
+                        <small>
+                          90% 범위 {r.low}~{r.high}개
+                        </small>
+                      </div>
                     </td>
                     <td className="num">{r.purchased}</td>
                     <td className="num">
@@ -237,11 +251,6 @@ function ProductTable({ products }) {
               })}
             </tbody>
           </table>
-          {rows.length > TOP_N && (
-            <button className="dash-more" onClick={() => setShowAll((v) => !v)}>
-              {showAll ? "상위 10개만 보기" : `전체 ${rows.length}개 보기`}
-            </button>
-          )}
         </div>
       )}
       <p className="dash-footnote">
