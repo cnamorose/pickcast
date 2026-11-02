@@ -1,27 +1,29 @@
 # Backend
 
-FastAPI 기반 API 서버와 모델 추론 연동을 개발합니다.
+FastAPI 기반 API 서버입니다. 체험 기록을 PostgreSQL에 저장하고, `ml/`의 구매 예측 모델로 예측한 결과를 화면에 내줍니다.
 
 ## 주요 기능
 
-* 체험 세션 관리
-* 상품 정보 제공 및 조회 이벤트 수집
-* 쇼핑 종료 시 모델 추론 실행
-* 최종 상품 선택 전 예측 결과 확정 및 저장
-* 가상 구매 결과 저장
-* 가상 결제 완료 후 예측과 실제 선택 비교 결과 제공
+* 체험 세션 관리와 조회·결제 기록 저장
+* 조회할 때마다 구매 확률 예측과 구매 의도 단계 판정 (사용자 맞춤 화면)
+* 결제 후 결과 화면 예측 (결제하러 들어간 마지막 조회 1개는 빼고 계산)
+* 판매자 대시보드: 쇼핑 중 고객의 단계별 인원, 상품별 예상 판매량, 확인해볼 점
+* 피크타임 우선 처리 시뮬레이션 결과와 재생
+* 구매 맞히기 게임(AI와 대결) 출제와 채점
+* 모델 버전 자동 교체 (재시작 없음), 재학습용 체험 기록 내보내기
 
 ## 개발 원칙
 
-* 최종 선택 정보가 모델 입력에 포함되지 않도록 합니다.
-* 학습과 서비스에서 동일한 피처 계산 규칙을 사용합니다.
+* 결제(최종 선택) 정보가 모델 입력에 포함되지 않도록 합니다.
+* 학습과 서비스에서 동일한 피처 계산 규칙을 사용합니다 (`ml/product_purchase`의 코드를 그대로 불러 씀).
+* 모델 출력으로 하는 계산은 `ml/`에, 업무 규칙(재고, 인사이트 문구, 세션 만료, 게임 채점)과 데이터는 `backend/`에 둡니다.
 
 ## 개발 환경
 
-* Python 3.13+
-* FastAPI
-* Uvicorn
-* PostgreSQL 17 (Docker), SQLModel
+* Python 3.14 (확인된 버전)
+* FastAPI, Uvicorn, SQLModel
+* PostgreSQL 17 (Docker)
+* 모델 계산에 `ml/requirements.txt`의 패키지(LightGBM, pandas 등)도 필요합니다.
 
 ## 실행 방법
 
@@ -50,15 +52,17 @@ docker compose up -d
 
 ### 3. 가상환경 활성화
 
+백엔드는 `ml/product_purchase`의 모델 코드를 불러 쓰므로, ml과 같은 가상환경(`ml\.venv`)을 씁니다. 없으면 먼저 만듭니다(`python -m venv ml\.venv`).
+
 ```powershell
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
-backend\venv\Scripts\Activate.ps1
+ml\.venv\Scripts\Activate.ps1
 ```
 
 ### 4. 패키지 설치
 
 ```powershell
-pip install -r backend\requirements.txt
+pip install -r ml\requirements.txt -r backend\requirements.txt
 ```
 
 ### 5. 서버 실행

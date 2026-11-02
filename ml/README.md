@@ -10,6 +10,12 @@ RetailRocket의 조회 행동을 바탕으로 상품별 구매 예측 모델을 
 - [본 모델 학습 데이터 생성 결과](../docs/ml/product-purchase-training-data.md) — 코드는 `product_purchase/`에 있습니다.
 - [본 모델 학습·보정·평가 결과](../docs/ml/product-purchase-model-results.md) — v1 모델(LightGBM, 시점 가중치, isotonic_smooth 보정, 임계값 4.27%)을 확정하고 test를 평가했습니다.
 - 서비스에서 쓸 추론 모듈(`product_purchase/predict.py`)을 추가했습니다. 백엔드 연결 방법은 [구매 예측 모델 연동 가이드](../docs/ml/product-purchase-inference-guide.md)에 정리했습니다.
+- [구매 의도 단계 판단 검증](../docs/ml/stage-validation.md) — 사용자 맞춤 화면의 단계 판단(`product_purchase/stage.py`)을 valid로 확인하고 단계의 해석을 바로잡았습니다.
+- [확장 기능 test 평가](../docs/ml/extension-test-results.md) — 단계 판단과 판매자 대시보드를 test로 한 번 확인했습니다.
+- [모델 v2: 일반 고객 기준 재보정](../docs/ml/recalibration-v2.md) — 모델은 그대로 두고 보정만 다시 맞춘 v2를 등록했습니다. **지금 서비스는 v2를 씁니다** (`models/current.json`).
+- 체험 기록 정제와 배치 재학습 파이프라인을 만들었습니다(아래 8절). 설정(`pipeline_config.json`)상 재학습은 아직 꺼져 있습니다.
+- [피크타임 우선 처리 시뮬레이션](../docs/ml/peak-simulation.md) — 구매 확률 우선 처리와 선착순을 RetailRocket 기록 재생으로 비교했습니다(아래 9절).
+- 구매 맞히기 게임(AI와 대결)의 문제를 test 사용자 기록으로 만들었습니다(아래 10절).
 
 ## 본 모델의 목표
 
