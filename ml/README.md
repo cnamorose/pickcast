@@ -16,6 +16,7 @@ RetailRocket의 조회 행동을 바탕으로 상품별 구매 예측 모델을 
 - 체험 기록 정제와 배치 재학습 파이프라인을 만들었습니다(아래 8절). 설정(`pipeline_config.json`)상 재학습은 아직 꺼져 있습니다.
 - [피크타임 우선 처리 시뮬레이션](../docs/ml/peak-simulation.md) — 구매 확률 우선 처리와 선착순을 RetailRocket 기록 재생으로 비교했습니다(아래 9절).
 - 구매 맞히기 게임(AI와 대결)의 문제를 test 사용자 기록으로 만들었습니다(아래 10절).
+- [시간 분할 검증과 장바구니·상품 통계 피처 실험](../docs/ml/time-split-results.md) — 5~6월 학습, 7월 검증, 8~9월 test로 나눠 지금 모델을 다시 확인하고, 장바구니·상품 통계 피처를 넣은 판매자용 모델을 실험했습니다(아래 11절). 서비스 모델에는 아직 반영하지 않았습니다.
 
 ## 본 모델의 목표
 
@@ -254,10 +255,49 @@ CSV(`timestamp`, `itemid` 컬럼)로 결과를 바로 확인할 수도 있습니
 - 문제 파일(`ml/results/guess_problems.json`, 약 34KB)은 백엔드가 읽도록 Git으로 관리합니다. 상품 번호, 첫 조회 후 경과 초, 정답, 난이도만 담고 사용자 번호는 담지 않습니다. 난이도별 AI 1순위 정답률을 만들 때의 모델 버전과 함께 저장합니다.
 - 원본 이벤트(`ml/data/raw/events.csv`)와 test 학습 데이터가 있어야 실행됩니다.
 
-### 11. 테스트
+### 11. 시간 분할 검증과 피처 실험
+
+과거 기간으로 학습하고 미래 기간으로 평가합니다. 모든 기록이 한 구간 안에 있는 사용자만 쓰고, 두 구간 이상에 걸친 사용자는 뺍니다. 결과는 `ml/data/product_purchase_time/`에 생기며, 사용자 단위 분할 결과(`ml/data/product_purchase/`)는 건드리지 않습니다.
+
+| 구간 | 기간 |
+| --- | --- |
+| train | 2015-05-03 ~ 06-30 |
+| valid | 2015-07-01 ~ 07-31 |
+| test | 2015-08-01 ~ 09-18 |
+
+```powershell
+$env:PRODUCT_PURCHASE_DIR = "product_purchase_time"
+
+# 지금 모델(조회 피처 8개)을 시간 분할로 다시 학습·평가
+.\ml\.venv\Scripts\python.exe ml/product_purchase/split_by_time.py
+.\ml\.venv\Scripts\python.exe ml/product_purchase/build_training_rows.py
+.\ml\.venv\Scripts\python.exe ml/product_purchase/validate_training_rows.py
+.\ml\.venv\Scripts\python.exe ml/product_purchase/train_models.py
+.\ml\.venv\Scripts\python.exe ml/product_purchase/calibrate_model.py --model lgbm_point
+.\ml\.venv\Scripts\python.exe ml/product_purchase/evaluate_time_split.py
+
+# 장바구니·상품 통계 등 피처 묶음을 넣고 빼는 실험
+.\ml\.venv\Scripts\python.exe ml/product_purchase/build_extended_rows.py
+.\ml\.venv\Scripts\python.exe ml/product_purchase/run_feature_experiments.py
+.\ml\.venv\Scripts\python.exe ml/product_purchase/calibrate_model.py --experiment view_cart_item
+.\ml\.venv\Scripts\python.exe ml/product_purchase/evaluate_time_split.py --experiment view_cart_item
+```
+
+| 스크립트 | 하는 일 |
+| --- | --- |
+| `split_by_time.py` | 기간으로 사용자 분할. `PRODUCT_PURCHASE_DIR`을 바꾸지 않으면 실행되지 않음 |
+| `build_extended_rows.py` | 조회·장바구니 시점별 확장 피처 학습 데이터 (`extended_rows/`) |
+| `run_feature_experiments.py` | `features_extended.py`의 피처 조합 8개를 학습하고 valid로 비교 (`feature_experiments/`) |
+| `evaluate_time_split.py` | test 한 번 평가. 구매 직전 1순위 정답률과 단순 규칙 비교 포함 |
+
+- 피처 묶음(view, cart, item, context, history)과 실험 조합은 `features_extended.py`에 있습니다. 기존 `features.py`는 서비스 모델이 쓰므로 바꾸지 않았습니다.
+- 상품 통계(`item_stats.py`)는 train 기간 기록으로만 계산하고, train 행에는 자기 사용자 묶음을 뺀 통계를 씁니다.
+- 원본 이벤트(`ml/data/raw/events.csv`)가 있어야 실행됩니다. 학습 데이터 생성은 각각 5분 안팎, 피처 실험 8개는 약 20분이 걸립니다.
+
+### 12. 테스트
 
 ```powershell
 .\ml\.venv\Scripts\python.exe -m unittest discover -s ml/product_purchase/tests -t ml/product_purchase -v
 ```
 
-`test_features.py`는 손으로 만든 조회 기록으로 피처 정의를 확인합니다. `test_predict.py`는 Git에 포함된 확정 모델로 추론 결과의 형식과 일관성을 확인합니다. `test_release.py`는 임시 폴더로 버전 반영·되돌리기를 확인하고, `current.json`이 쓸 수 있는 버전을 가리키는지 확인합니다. `test_stage.py`의 시나리오 테스트는 `ml/models/`에 등록된 모든 버전으로 단계 판단을 확인하므로, 새 버전을 등록하면 단계 기준값이 그 버전에서도 통하는지 바로 드러납니다. `test_recalibrate.py`는 재보정의 등록 기준을 확인합니다. `test_experience.py`는 체험 기록 정제·학습 행·스위치를, `test_pipeline.py`는 임시 폴더와 가짜 체험 기록으로 파이프라인의 단계별 멈춤·등록·반영을 확인합니다. `test_peak_simulation.py`는 손으로 만든 요청으로 처리 순서, 이탈, 에이징을 확인합니다. `test_guess_game.py`는 손으로 만든 조회 기록으로 게임 문제 기준과 난이도를 확인합니다.
+`test_features.py`는 손으로 만든 조회 기록으로 피처 정의를 확인합니다. `test_predict.py`는 Git에 포함된 확정 모델로 추론 결과의 형식과 일관성을 확인합니다. `test_release.py`는 임시 폴더로 버전 반영·되돌리기를 확인하고, `current.json`이 쓸 수 있는 버전을 가리키는지 확인합니다. `test_stage.py`의 시나리오 테스트는 `ml/models/`에 등록된 모든 버전으로 단계 판단을 확인하므로, 새 버전을 등록하면 단계 기준값이 그 버전에서도 통하는지 바로 드러납니다. `test_recalibrate.py`는 재보정의 등록 기준을 확인합니다. `test_experience.py`는 체험 기록 정제·학습 행·스위치를, `test_pipeline.py`는 임시 폴더와 가짜 체험 기록으로 파이프라인의 단계별 멈춤·등록·반영을 확인합니다. `test_peak_simulation.py`는 손으로 만든 요청으로 처리 순서, 이탈, 에이징을 확인합니다. `test_guess_game.py`는 손으로 만든 조회 기록으로 게임 문제 기준과 난이도를 확인합니다. `test_features_extended.py`는 확장 피처(조회만 있을 때 기존 피처와 같은 값인지, 장바구니·방문·과거 구매)와 상품 통계에서 자기 묶음을 빼는지를 확인합니다.

@@ -13,6 +13,7 @@
 | [학습·보정·평가 결과](ml/product-purchase-model-results.md) | 모델 비교와 선택, 확률 보정, 임계값, test 평가 |
 | [모델 연동 가이드](ml/product-purchase-inference-guide.md) | 백엔드에서 추론 모듈(`predict.py`)을 쓰는 방법 |
 | [모델 v2: 일반 고객 기준 재보정](ml/recalibration-v2.md) | 보정만 다시 맞춘 v2와 등록 기준 비교 (지금 서비스 버전) |
+| [시간 분할 검증과 피처 실험](ml/time-split-results.md) | 5~6월 학습·7월 검증·8~9월 test, 장바구니·상품 통계 피처를 넣고 뺀 비교 (판매자용 모델 실험) |
 
 ### 예측을 쓰는 기능
 
