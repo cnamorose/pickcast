@@ -16,10 +16,13 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import log_loss
 
 from features import FEATURES
+from features_extended import EXPERIMENTS, experiment_features
 from modeling import (
     apply_calibration,
     best_f1_threshold,
     evaluate,
+    experiments_dir,
+    extended_rows_dir,
     load_split,
     models_dir,
     point_weights,
@@ -77,12 +80,20 @@ def main():
     parser = argparse.ArgumentParser()
     # 분할을 바꾼 실험에서는 그 실험의 valid 비교로 고른 모델을 넘긴다.
     parser.add_argument("--model", default=SELECTED_MODEL)
+    # 확장 피처 실험의 최종 조합을 보정할 때 실험 이름을 넘긴다 (features_extended.EXPERIMENTS).
+    parser.add_argument("--experiment", choices=list(EXPERIMENTS))
     args = parser.parse_args()
 
+    if args.experiment:
+        target_dir = experiments_dir / args.experiment
+        features = experiment_features(args.experiment)
+        valid = load_split("valid", features, extended_rows_dir)
+    else:
+        target_dir, features = models_dir, FEATURES
+        valid = load_split("valid")
     print("valid를 읽고 모델 점수를 계산합니다.", flush=True)
-    valid = load_split("valid")
-    model = lgb.Booster(model_file=str(models_dir / f"{args.model}.txt"))
-    raw = model.predict(valid[FEATURES])
+    model = lgb.Booster(model_file=str(target_dir / f"{args.model}.txt"))
+    raw = model.predict(valid[features])
     y = valid["label"].to_numpy()
     weight = point_weights(valid)
 
@@ -138,7 +149,7 @@ def main():
             y[~heavy], p[~heavy], np.ones((~heavy).sum())
         ),
     }
-    (models_dir / "calibration.json").write_text(
+    (target_dir / "calibration.json").write_text(
         json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8"
     )
 

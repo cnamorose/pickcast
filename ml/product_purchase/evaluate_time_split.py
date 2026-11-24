@@ -14,11 +14,12 @@
 
     $env:PRODUCT_PURCHASE_DIR = "product_purchase_time"
     python ml/product_purchase/evaluate_time_split.py
+    python ml/product_purchase/evaluate_time_split.py --experiment all   # 확장 피처 실험
 """
+import argparse
 import json
 
 import lightgbm as lgb
-import numpy as np
 import pandas as pd
 
 from calibrate_model import RELIABILITY_EDGES
@@ -26,9 +27,12 @@ from evaluate_extension_test import rule_ranking
 from evaluate_test import by_month, candidate_ranking, pair_level
 from events import DEFAULT_OUTPUT_NAME, load_events, output_dir
 from features import FEATURES
+from features_extended import EXPERIMENTS, experiment_features
 from modeling import (
     apply_calibration,
     evaluate,
+    experiments_dir,
+    extended_rows_dir,
     load_split,
     models_dir,
     point_weights,
@@ -37,8 +41,12 @@ from modeling import (
 )
 
 
-def pre_purchase_points(test, first_purchase):
-    """구매한 사용자마다 첫 구매 직전 예측 시점 하나를 고른 행 마스크 두 가지."""
+def pre_purchase_points(test, first_purchase, touched_column="is_last_viewed"):
+    """구매한 사용자마다 첫 구매 직전 예측 시점 하나를 고른 행 마스크 두 가지.
+
+    touched_column: 그 시점에 방금 본 상품을 가리키는 열. 확장 피처 실험은 조회·담기를 모두
+    보는 touched_now를 쓴다.
+    """
     keys = test[["visitorid", "cutoff_timestamp"]]
     before = keys["cutoff_timestamp"].to_numpy() < (
         keys["visitorid"].map(first_purchase).fillna(-1).to_numpy()
@@ -47,10 +55,10 @@ def pre_purchase_points(test, first_purchase):
     last = points.groupby("visitorid").tail(1)
     previous = points.groupby("visitorid").nth(-2)
 
-    # 마지막 시점에 방금 본 상품(is_last_viewed)이 이후 산 상품이면 결제하러 들어간 조회로 본다.
+    # 마지막 시점에 방금 본 상품이 이후 산 상품이면 결제하러 들어간 조회로 본다.
     at_last = test.merge(last, on=["visitorid", "cutoff_timestamp"])
     checkout_users = at_last.loc[
-        (at_last["is_last_viewed"] == 1) & (at_last["label"] == 1), "visitorid"
+        (at_last[touched_column] == 1) & (at_last["label"] == 1), "visitorid"
     ].unique()
     without_checkout = pd.concat(
         [
@@ -70,31 +78,61 @@ def pre_purchase_points(test, first_purchase):
     }
 
 
+def first_purchase_by_user():
+    events, _ = load_events()
+    return events.loc[events["event"] == "transaction"].groupby("visitorid")["timestamp"].min()
+
+
+def pre_purchase_ranking(frame, p, first_purchase, touched_column="is_last_viewed"):
+    """구매 직전 1순위 정답률 (마지막 시점 / 결제하러 들어간 조회 제외, 전체 / 일반 고객)."""
+    pre = pre_purchase_points(frame, first_purchase, touched_column)
+    non_heavy = (frame["heavy_user"] == 0).to_numpy()
+    return {
+        "checkout_view_users": pre["checkout_view_users"],
+        **{
+            name: {
+                "all_users": rule_ranking(frame[pre[name]], p[pre[name]]),
+                "non_heavy_users": rule_ranking(
+                    frame[pre[name] & non_heavy], p[pre[name] & non_heavy]
+                ),
+            }
+            for name in ("last_point", "without_checkout_view")
+        },
+    }
+
+
 def main():
+    parser = argparse.ArgumentParser()
+    # 확장 피처 실험의 최종 조합을 평가할 때 실험 이름을 넘긴다 (features_extended.EXPERIMENTS).
+    parser.add_argument("--experiment", choices=list(EXPERIMENTS))
+    args = parser.parse_args()
+
     if output_dir.name == DEFAULT_OUTPUT_NAME:
         raise SystemExit("시간 분할 실험 폴더에서 실행하세요 (PRODUCT_PURCHASE_DIR).")
-    output_path = models_dir / "test_metrics.json"
+    if args.experiment:
+        target_dir = experiments_dir / args.experiment
+        features = experiment_features(args.experiment)
+        split_args = {"directory": extended_rows_dir, "extra_columns": ["touched_now"]}
+        touched_column = "touched_now"
+    else:
+        target_dir, features, split_args, touched_column = models_dir, FEATURES, {}, "is_last_viewed"
+    output_path = target_dir / "test_metrics.json"
     if output_path.exists():
         raise SystemExit(f"test는 이미 평가했습니다: {output_path}")
 
-    calibration = json.loads((models_dir / "calibration.json").read_text(encoding="utf-8"))
-    model = lgb.Booster(model_file=str(models_dir / f"{calibration['model']}.txt"))
+    calibration = json.loads((target_dir / "calibration.json").read_text(encoding="utf-8"))
+    model = lgb.Booster(model_file=str(target_dir / f"{calibration['model']}.txt"))
     threshold = calibration["threshold"]
 
     print("test를 읽고 평가합니다.", flush=True)
-    test = load_split("test")
-    p = apply_calibration(model.predict(test[FEATURES]), calibration)
+    test = load_split("test", features, **split_args)
+    p = apply_calibration(model.predict(test[features]), calibration)
     y = test["label"].to_numpy()
     weight = point_weights(test)
     non_heavy = (test["heavy_user"] == 0).to_numpy()
 
     print("첫 구매 시각을 읽습니다.", flush=True)
-    events, _ = load_events()
-    first_purchase = (
-        events.loc[events["event"] == "transaction"].groupby("visitorid")["timestamp"].min()
-    )
-    del events
-    pre = pre_purchase_points(test, first_purchase)
+    first_purchase = first_purchase_by_user()
 
     report = {
         "model": calibration["model"],
@@ -110,19 +148,11 @@ def main():
             "all_users": rule_ranking(test, p),
             "non_heavy_users": rule_ranking(test[non_heavy], p[non_heavy]),
         },
-        "pre_purchase_ranking": {
-            "checkout_view_users": pre["checkout_view_users"],
-            **{
-                name: {
-                    "all_users": rule_ranking(test[pre[name]], p[pre[name]]),
-                    "non_heavy_users": rule_ranking(
-                        test[pre[name] & non_heavy], p[pre[name] & non_heavy]
-                    ),
-                }
-                for name in ("last_point", "without_checkout_view")
-            },
-        },
+        "pre_purchase_ranking": pre_purchase_ranking(test, p, first_purchase, touched_column),
     }
+    if args.experiment:
+        report["experiment"] = args.experiment
+        report["features"] = features
     output_path.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
 
     main_metrics = report["test"]["point_weighted"]
