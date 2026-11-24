@@ -6,6 +6,7 @@ isotonic은 확률이 계단식이라 조회해도 확률이 바뀌지 않는 �
 임계값도 교차 보정 확률에서 정해, 보정에 쓴 행으로 바로 평가하지 않는다.
 test는 사용하지 않는다.
 """
+import argparse
 import json
 
 import lightgbm as lgb
@@ -73,9 +74,14 @@ def fit_calibration(method, raw, y, weight):
 
 
 def main():
+    parser = argparse.ArgumentParser()
+    # 분할을 바꾼 실험에서는 그 실험의 valid 비교로 고른 모델을 넘긴다.
+    parser.add_argument("--model", default=SELECTED_MODEL)
+    args = parser.parse_args()
+
     print("valid를 읽고 모델 점수를 계산합니다.", flush=True)
     valid = load_split("valid")
-    model = lgb.Booster(model_file=str(models_dir / f"{SELECTED_MODEL}.txt"))
+    model = lgb.Booster(model_file=str(models_dir / f"{args.model}.txt"))
     raw = model.predict(valid[FEATURES])
     y = valid["label"].to_numpy()
     weight = point_weights(valid)
@@ -111,7 +117,7 @@ def main():
 
     heavy = valid["heavy_user"].to_numpy() == 1
     report = {
-        "model": SELECTED_MODEL,
+        "model": args.model,
         **calibration,
         "threshold": threshold,
         "cross_fit_log_loss": {

@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 
 import pandas as pd
@@ -5,7 +6,10 @@ import pandas as pd
 
 ml_dir = Path(__file__).resolve().parents[1]
 events_path = ml_dir / "data" / "raw" / "events.csv"
-output_dir = ml_dir / "data" / "product_purchase"
+# 분할 방식을 바꾼 실험은 PRODUCT_PURCHASE_DIR로 결과 폴더만 바꿔 같은 스크립트를 실행한다.
+# 기본값(product_purchase)은 서비스 모델 v1·v2를 만든 사용자 단위 분할이다.
+DEFAULT_OUTPUT_NAME = "product_purchase"
+output_dir = ml_dir / "data" / os.environ.get("PRODUCT_PURCHASE_DIR", DEFAULT_OUTPUT_NAME)
 
 # 조회 수가 이 값 이상인 사용자를 과다 조회 사용자로 표시한다.
 # 삭제하지 않고 표시만 하며, 학습·평가에서 포함/제외 결과를 비교한다.
