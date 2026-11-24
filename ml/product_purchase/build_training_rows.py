@@ -1,7 +1,8 @@
 """조회 시점별·후보 상품별 학습 데이터를 만든다.
 
 샘플링하지 않고 전체 사용자의 모든 조회 시점을 사용한다.
-split_users.py로 만든 사용자 분리에 따라 train/valid/test Parquet 파일로 저장한다.
+split_users.py(사용자 단위) 또는 split_by_time.py(시간 단위)로 만든 사용자 분리에 따라
+train/valid/test Parquet 파일로 저장한다.
 """
 import json
 from collections import defaultdict
@@ -115,7 +116,10 @@ def main():
         mininterval=5,
     ):
         uid = int(visitor[point_start[first]])
-        writer = writers[split_of[uid]]
+        writer = writers.get(split_of[uid])
+        if writer is None:
+            # 시간 분할에서 두 구간 이상에 기록이 걸친 사용자(excluded)는 쓰지 않는다.
+            continue
         heavy = heavy_of[uid]
         buys = first_buy.get(uid, {})
         pending_buys = sorted((t, i) for i, t in buys.items())

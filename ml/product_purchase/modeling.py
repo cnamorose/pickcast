@@ -14,15 +14,24 @@ from features import FEATURES
 
 rows_dir = output_dir / "training_rows"
 models_dir = output_dir / "models"
+# 확장 피처 실험 (build_extended_rows.py, run_feature_experiments.py)
+extended_rows_dir = output_dir / "extended_rows"
+experiments_dir = output_dir / "feature_experiments"
 
 WEIGHTINGS = ["row", "point", "user"]
 
 
-def load_split(name):
-    """구간 데이터를 읽고 예측 시점별 후보 수와 사용자별 행 수를 붙인다."""
+def load_split(name, features=FEATURES, directory=rows_dir, extra_columns=()):
+    """구간 데이터를 읽고 예측 시점별 후보 수와 사용자별 행 수를 붙인다.
+
+    확장 피처 실험은 directory(extended_rows)와 features, 평가용 열(extra_columns)을 넘긴다.
+    """
     table = pq.read_table(
-        rows_dir / f"{name}.parquet",
-        columns=["visitorid", "cutoff_timestamp", "itemid", "heavy_user", *FEATURES, "label"],
+        directory / f"{name}.parquet",
+        columns=[
+            "visitorid", "cutoff_timestamp", "itemid", "heavy_user",
+            *features, *extra_columns, "label",
+        ],
     )
     frame = table.to_pandas()
     del table

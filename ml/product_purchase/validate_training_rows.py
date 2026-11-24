@@ -168,9 +168,9 @@ def main():
         join="inner",
     )
     expected_pairs = pairs[pairs["view"] < pairs["buy"]]
-    buyers_rows = users.loc[
-        expected_pairs.index.get_level_values("visitorid").unique(), "n_positive_rows"
-    ]
+    buyers = users.loc[expected_pairs.index.get_level_values("visitorid").unique()]
+    # 시간 분할에서 두 구간 이상에 걸쳐 제외한 사용자는 행이 없는 것이 맞다.
+    buyers_rows = buyers.loc[buyers["split"].astype(str) != "excluded", "n_positive_rows"]
     check((buyers_rows > 0).all(), f"정답 1 행이 없는 구매 사용자 {(buyers_rows == 0).sum()}명")
     check(
         total_positives == int(users["n_positive_rows"].sum()),
