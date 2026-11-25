@@ -160,14 +160,17 @@ class JudgeStageRuleTest(unittest.TestCase):
 
 
 class JudgeStageScenarioTest(unittest.TestCase):
-    """실제 모델 확률로 대표적인 쇼핑 흐름이 의도한 단계가 되는지, 모든 모델 버전에서 확인한다."""
+    """실제 모델 확률로 대표적인 쇼핑 흐름이 의도한 단계가 되는지, 조회만 쓰는 모든 버전에서 확인한다.
+
+    단계 기준값은 조회만 쓰는 모델(v1·v2)로 정했다. 조회·장바구니 모델(v3~)은 제외한다.
+    """
 
     @classmethod
     def setUpClass(cls):
         cls.predictors = {
             v["version"]: PurchasePredictor(release_dir(v["version"]))
             for v in list_versions()
-            if v["problem"] is None
+            if v["problem"] is None and v["input"] == "view"
         }
 
     def judge(self, predictor, items, gap=30 * SECOND):

@@ -39,6 +39,17 @@ def release_dir(version=None, models_dir=MODELS_DIR):
     return Path(models_dir) / normalize(version or current_version(models_dir))
 
 
+def model_input(directory):
+    """버전의 입력 종류. view(조회만, predict.py) 또는 view_cart(조회·장바구니, predict_extended.py).
+
+    v1·v2는 metadata.json에 input이 없으며 조회만 쓴다.
+    """
+    metadata_path = Path(directory) / "metadata.json"
+    if not metadata_path.exists():
+        return "view"
+    return json.loads(metadata_path.read_text(encoding="utf-8")).get("input", "view")
+
+
 def check_version(directory):
     """서비스에 쓸 수 있는 버전 폴더인지 확인한다. 문제가 있으면 이유를 돌려준다."""
     calibration_path = directory / "calibration.json"
@@ -49,6 +60,8 @@ def check_version(directory):
     model = json.loads(calibration_path.read_text(encoding="utf-8")).get("model")
     if not model or not (directory / f"{model}.txt").exists():
         return f"calibration.json에 적힌 모델 파일({model}.txt)이 없습니다: {directory}"
+    if model_input(directory) == "view_cart" and not (directory / "item_stats.parquet").exists():
+        return f"상품 통계(item_stats.parquet)가 없습니다: {directory}"
     return None
 
 
@@ -65,6 +78,7 @@ def list_versions(models_dir=MODELS_DIR):
                 "version": directory.name,
                 "created": metadata.get("created"),
                 "description": metadata.get("description"),
+                "input": metadata.get("input", "view"),
                 "problem": check_version(directory),
             }
         )

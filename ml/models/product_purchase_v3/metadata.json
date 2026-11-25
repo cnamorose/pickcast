@@ -1,0 +1,41 @@
+{
+  "version": "product_purchase_v3",
+  "created": "2026-11-25",
+  "description": "조회·장바구니·상품 통계 피처 모델 (판매자용). 시간 분할 실험의 view_cart_item 조합",
+  "input": "view_cart",
+  "features": [
+    "view_count",
+    "view_share",
+    "seconds_since_first_view",
+    "seconds_since_last_view",
+    "revisit_count",
+    "user_total_views",
+    "distinct_items_viewed",
+    "is_last_viewed",
+    "cart_count",
+    "seconds_since_last_cart",
+    "user_carted_items",
+    "item_viewers",
+    "item_purchase_rate",
+    "item_cart_rate"
+  ],
+  "item_stats_defaults": {
+    "item_viewers": 0.0,
+    "item_purchase_rate": 0.009957228787243366,
+    "item_cart_rate": 0.02886727638542652
+  },
+  "training_data": "RetailRocket 2015-05-03 ~ 06-30 (기록이 이 기간 안에만 있는 사용자)",
+  "calibration_data": "RetailRocket 2015-07-01 ~ 07-31 (기록이 이 기간 안에만 있는 사용자)",
+  "item_stats_data": "RetailRocket 2015-05-03 ~ 06-30 전체 기록",
+  "evaluation": {
+    "data": "RetailRocket 2015-08-01 ~ 09-18 (기록이 이 기간 안에만 있는 사용자)",
+    "ap": 0.1789,
+    "positive_rate": 0.0122,
+    "roc_auc": 0.8152,
+    "precision": 0.241,
+    "recall": 0.4001,
+    "pre_purchase_top1": 0.7543,
+    "threshold": 0.1436
+  },
+  "notes": "test 기간(8~9월) 기록을 학습·보정에 쓰지 않았다. 시뮬레이션은 그 기간을 재생한다. docs/ml/time-split-results.md 참고"
+}
