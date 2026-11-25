@@ -21,7 +21,7 @@ import pandas as pd
 
 from features import FEATURES, UserViewState
 from modeling import apply_calibration
-from release import release_dir
+from release import model_input, release_dir
 
 
 # 서비스에 쓰는 확정 모델. 학습 결과(ml/data/product_purchase/models/)와 달리 Git으로 관리한다.
@@ -53,6 +53,10 @@ def to_milliseconds(values):
 class PurchasePredictor:
     def __init__(self, directory=RELEASE_DIR):
         directory = Path(directory)
+        if model_input(directory) != "view":
+            raise ValueError(
+                f"조회만 쓰는 모델이 아닙니다: {directory} (predict_extended.py를 쓰세요)"
+            )
         self.version = directory.name
         self.calibration = json.loads(
             (directory / "calibration.json").read_text(encoding="utf-8")
