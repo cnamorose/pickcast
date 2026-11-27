@@ -7,6 +7,7 @@ from . import models  # noqa: F401  테이블 정의를 등록
 from .dashboard_api import router as dashboard_router
 from .db import create_tables, engine
 from .guess_api import router as guess_router
+from .journey_api import router as journey_router
 from .ml import get_predictor, models
 from .peak_api import router as peak_router
 from .replay_api import router as replay_router
@@ -32,6 +33,7 @@ app.include_router(dashboard_router)
 app.include_router(peak_router)
 app.include_router(guess_router)
 app.include_router(replay_router)
+app.include_router(journey_router)
 
 
 @app.get("/")
