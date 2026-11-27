@@ -11,7 +11,7 @@ FastAPI 기반 API 서버입니다. 체험 기록을 PostgreSQL에 저장하고,
 * 피크타임 우선 처리 시뮬레이션 결과와 재생
 * 구매 맞히기 게임(AI와 대결) 출제와 채점
 * 판매자 대시보드 재생: 학습에 쓰지 않은 하루 기록의 1분별 대시보드 상태(v3 모델, 다음 10분 예상 판매)
-* 손님 한 명 따라가기: 실제 손님 기록을 한 행동씩 재생하며 그 순간의 판매자 대시보드(v3 예측) 계산
+* 시뮬레이션: 같은 시간대 실제 손님들의 쇼핑과 가게 전체 판매자 대시보드(v3 예측, 가정 재고와 알림)
 * 모델 버전 자동 교체 (재시작 없음), 재학습용 체험 기록 내보내기
 
 ## 개발 원칙
@@ -119,8 +119,9 @@ docker compose up -d
 | `POST /guess-game/answer` | 고른 상품을 받아 정답과 AI 예측(후보별 확률 순위)을 돌려줌 |
 | `GET /replay/days` | 판매자 대시보드 재생: 재생할 수 있는 날짜와 요약 |
 | `GET /replay/days/{date}` | 하루치 재생 데이터: 1분별 대시보드 상태, 실제 기록, 다음 10분 실제 판매 |
-| `GET /journeys` | 손님 한 명 따라가기: 손님 목록과 결과 요약 |
-| `GET /journeys/{id}` | 손님 한 명의 행동별 기록과 그 순간의 판매자 대시보드 |
+| `GET /journeys` | 시뮬레이션: 시간 창과 화면 탭에 띄울 손님 목록·결과 요약 |
+| `GET /journeys/store` | 시뮬레이션: 가게 전체 대시보드 (1분마다 예상 판매, 곧 팔릴 상품, 가정 재고·알림, 팔린 상품) |
+| `GET /journeys/{id}` | 시뮬레이션: 손님 한 명의 행동별 기록과 그 순간 그 손님의 예측 |
 
 ### 구매 의도 단계 (`stage`)
 
@@ -321,11 +322,13 @@ RetailRocket test 사용자의 실제 조회 기록을 보고 "이 사람이 산
 * 예측은 이미 들어와서 보거나 담은 고객 기준이라, 아직 들어오지 않은 고객의 판매(약 29%)는 예상에 없습니다. 화면에 "지금 쇼핑 중인 고객 기준"이라고 밝힙니다. `/days` 응답의 `note`에 안내 문구가 있습니다.
 * test 사용자만 들어 있어 여러 기간에 걸친 고객(구매의 약 26%)은 빠져 있습니다.
 
-### 손님 한 명 따라가기 (`/journeys`)
+### 시뮬레이션: 같은 시간대 손님들과 가게 전체 대시보드 (`/journeys`)
 
-시뮬레이션 화면용 API입니다. 실제 손님 한 명의 기록을 한 행동씩 재생하며, 왼쪽에는 손님의 행동(상품 보기·담기·구매와 머문 시간)을, 오른쪽에는 그 순간 판매자 대시보드에 뜰 예측을 보여주는 데 씁니다.
+시뮬레이션 화면용 API입니다. test 기간의 붐비는 두 시간(2015-08-17 17:00~19:00 UTC, 동시에 쇼핑 중인 손님 최대 약 500명)을 같은 시계로 재생합니다. 화면 왼쪽은 손님 몇 명의 쇼핑 화면(탭으로 골라 봄), 오른쪽은 그 시간 가게 전체를 보는 판매자 대시보드입니다. 모델(v3)은 이 기간 기록을 학습·보정에 쓰지 않았습니다. 시각은 모두 시간 창 시작부터의 초(분)입니다.
 
-* 손님 기록은 `backend/scripts/build_journeys.py`가 원본(`ml/data/raw/events.csv`)에서 골라 `backend/app/data/journeys.json`에 저장합니다. 모델이 학습·보정에 쓰지 않은 test 기간(2015-08-01 ~ 09-18) 고객 중 기록 전체가 한 번의 방문(행동 사이 30분 이내, 5~25개, 90분 이내)인 고객을 유형별로 고정 시드 무작위 3명씩, 모두 9명 골랐습니다. AI가 맞혔는지 보고 고르지 않았습니다.
+* 탭에 띄울 손님은 `backend/scripts/build_journeys.py`가 원본(`ml/data/raw/events.csv`)에서 골라 `backend/app/data/journeys.json`에 저장합니다. 그 시간에 쇼핑한 test 고객 중 한 번의 방문(행동 사이 30분 이내, 행동 4~25개)이 시간 창 안에 다 들어 있는 고객을 유형별로 고정 시드 무작위 2명씩, 모두 6명 골랐습니다. AI가 맞혔는지 보고 고르지 않았습니다. 탭 번호는 들어온 순서입니다.
+* 이전에 온 적 있는 손님이면 이전 기록(`history`)도 저장해 예측에 쓰고, 화면에는 이번 방문만 보여줍니다(`returning`).
+* 예측은 서비스 버전(`current.json`)과 관계없이 조회·장바구니 입력 모델 **v3**로 합니다. 처음 요청할 때 계산해 두고, 파일이 바뀌면 다시 계산합니다.
 
 | 유형 (`type`) | 기준 |
 |---|---|
@@ -333,21 +336,34 @@ RetailRocket test 사용자의 실제 조회 기록을 보고 "이 사람이 산
 | `cart_leave` | 담았지만 사지 않고 떠난 손님 |
 | `quick_buy` | 3개 이하 상품만 보고 15분 안에 산 손님 |
 
-* 예측은 서비스 버전(`current.json`)과 관계없이 조회·장바구니 입력 모델 **v3**로 합니다. 처음 요청할 때 9명을 모두 계산해(1초 안팎) 두고, 파일이 바뀌면 다시 계산합니다.
+`GET /journeys`는 `window`(`date`, `start`, `start_minute`, `minutes`)와 손님마다 `id`, `type`, `label`, `returning`, `steps`(행동 수), `enter_second`, `leave_second`, `bought`(산 상품), `ai_top1`(산 상품 중 구매 바로 전에 AI가 1순위로 꼽은 수)을 돌려줍니다.
 
-`GET /journeys`는 손님마다 `id`, `type`, `label`, `started_at`(UTC), `steps`(행동 수), `minutes`, `bought`(산 상품), `ai_top1`(산 상품 중 구매 바로 전에 AI가 1순위로 꼽은 수)을 돌려줍니다.
-
-`GET /journeys/3`의 `steps`는 행동 순서입니다.
+`GET /journeys/store`는 가게 전체 대시보드입니다. 같은 날 재생 파일(`ml/results/replay/2015-08-17.json`, `GET /replay/days/{date}`와 같은 데이터)에서 시간 창만 잘라, 가정 재고와 알림을 붙입니다(`app/store_simulation.py`). 응답은 약 50KB입니다.
 
 | 필드 | 내용 |
 |---|---|
-| `second`, `event`, `item_id` | 첫 행동부터 초, `view` / `addtocart` / `transaction`, 상품 번호 |
+| `shoppers`, `carting` | 1분마다 최근 30분 안에 보거나 담은 손님 수, 담은 손님 수 |
+| `expected_next_10m` | 1분마다 다음 10분 예상 판매 합 |
+| `actual_known_next_10m` | 1분마다 그 뒤 10분 안에 실제로 팔린 수 (AI가 보던 손님의 구매) |
+| `top_items` | 1분마다 곧 팔릴 상품 10개 `[상품, 예상 판매, 1개 이상 팔릴 확률, 보고 있는 손님 수, 남은 재고, 상태]` |
+| `sales` | 시간 창 안에서 팔린 상품: `second`, `item_id`, `customer`(재생 파일의 고객 번호), `probability`, `rank`(산 직전 AI 순위, 못 봤으면 `null`) |
+| `initial_stock`, `stock_rule` | 팔린 상품의 처음 재고, 재고 가정과 알림 규칙 문장 |
+
+* **재고는 데이터에 없어 가정한 값입니다.** 상품 번호로 정한 1~5개에서 시작하고, 시간 창 안에서 실제로 팔리면 줄어듭니다. 시뮬레이션에서는 채우지 않습니다.
+* 상태: `soldout`(남은 재고 0), `refill`(남은 재고 2개 이하이고 10분 안에 1개 이상 팔릴 확률 10% 이상), `ok`
+* 예측은 이미 들어와서 보거나 담은 손님 기준이라 아직 들어오지 않은 손님의 구매는 예상에 없습니다. 응답의 `note`에 안내 문구가 있습니다.
+
+`GET /journeys/2`의 `steps`는 그 손님의 이번 방문 행동 순서입니다.
+
+| 필드 | 내용 |
+|---|---|
+| `second`, `event`, `item_id` | 시간 창 시작부터 초, `view` / `addtocart` / `transaction`, 상품 번호 |
 | `dwell_seconds` | 다음 행동까지 걸린 시간(그 화면에 머문 시간). 마지막 행동은 `null` |
-| `dashboard.candidates` | 그 행동 직후 후보 상품별 `probability`(이후 언젠가 살 확률), `rank`, `decision`(임계값 `threshold` 이상이면 구매 예상), `carted`, `within_10m`(앞으로 10분 안에 살 확률), `reasons` |
+| `dashboard.candidates` | 그 행동 직후 이 손님의 후보 상품별 `probability`(이후 언젠가 살 확률), `rank`, `decision`(임계값 `threshold` 이상이면 구매 예상), `carted`, `within_10m`(앞으로 10분 안에 살 확률), `reasons` |
 | `dashboard.purchased` | 지금까지 산 상품 (후보에서 빠짐) |
 
-* `reasons`는 확률에 가장 크게 기여한 피처 3개입니다. `label`(한글 이름), `value`(피처 값, 시간 피처는 초), `contribution`(SHAP 기여도, 양수면 구매 쪽)입니다.
-* `outcomes`는 산 상품마다 구매 바로 앞 행동 직후의 순위·확률(`rank_before`, `probability_before`), 결제하러 들어간 행동(산 상품을 바로 앞에서 보거나 담음)을 뺀 순위(`rank_excluding_checkout`, 모델 평가의 "구매 직전 1순위"와 같은 기준), 구매 전 몇 초 동안 계속 1순위였는지(`top1_seconds_before`)입니다.
+* `reasons`는 확률에 가장 크게 기여한 피처 3개입니다. `label`(한글 이름), `value`(피처 값, 시간 피처는 초, 값이 없으면 `null`), `contribution`(SHAP 기여도, 양수면 구매 쪽)입니다.
+* `outcomes`는 산 상품마다 구매 바로 앞 행동 직후의 순위·확률(`rank_before`, `probability_before`), 결제하러 들어간 행동을 뺀 순위(`rank_excluding_checkout`), 구매 전 몇 초 동안 계속 1순위였는지(`top1_seconds_before`)입니다.
 * 상품은 번호뿐이라 화면에서는 상품 이미지를 임의로 붙이고 그렇다는 안내를 넣습니다. `/journeys` 응답의 `note`에 안내 문구가 있습니다.
 
 ## 재학습용 체험 기록 내보내기
