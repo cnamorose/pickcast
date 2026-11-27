@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 from sqlalchemy import text
 
 from . import models  # noqa: F401  테이블 정의를 등록
@@ -8,6 +9,7 @@ from .db import create_tables, engine
 from .guess_api import router as guess_router
 from .ml import get_predictor, models
 from .peak_api import router as peak_router
+from .replay_api import router as replay_router
 from .sessions import router as sessions_router
 
 
@@ -20,6 +22,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+# 재생 데이터(하루 약 0.8MB) 같은 큰 응답을 압축한다.
+app.add_middleware(GZipMiddleware, minimum_size=1000)
 
 create_tables()
 
@@ -27,6 +31,7 @@ app.include_router(sessions_router)
 app.include_router(dashboard_router)
 app.include_router(peak_router)
 app.include_router(guess_router)
+app.include_router(replay_router)
 
 
 @app.get("/")
