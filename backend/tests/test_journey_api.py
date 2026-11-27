@@ -10,12 +10,14 @@ from backend.app.journey_api import (
     dashboard_at,
     get_journey,
     get_journeys,
+    get_store,
     journeys,
     model,
     purchase_outcomes,
+    reasons,
 )
 
-A, B, C = 388536, 210002, 217794  # 저장소 손님 기록에 있는 상품 번호 (상품 통계가 붙는다)
+A, B, C = 388536, 210002, 217794  # 2015년 test 기록에 있는 상품 번호 (상품 통계가 붙는다)
 
 
 def step(*ranked):
@@ -48,6 +50,17 @@ class PurchaseOutcomesTest(unittest.TestCase):
         outcome = purchase_outcomes(events, [step(A), step(B, A), step(B)])[0]
         self.assertEqual(outcome["rank_before"], 2)
         self.assertIsNone(outcome["top1_seconds_before"])
+
+
+class ReasonsTest(unittest.TestCase):
+    def test_missing_feature_value_becomes_none(self):
+        candidate = {
+            "features": {"seconds_since_last_cart": float("nan"), "view_count": 2.0},
+            "shap": {"contributions": {"seconds_since_last_cart": -0.5, "view_count": 0.2}},
+        }
+        result = reasons(candidate)
+        self.assertIsNone(result[0]["value"])
+        self.assertEqual(result[1]["value"], 2.0)
 
 
 class DashboardTest(unittest.TestCase):
@@ -86,10 +99,16 @@ class JourneyApiTest(unittest.TestCase):
         self.assertEqual(caught.exception.status_code, 404)
 
     def test_repository_journeys(self):
-        customers = get_journeys()["customers"]
-        self.assertEqual(len(customers), 9)
-        self.assertEqual({c["type"] for c in customers}, {"compare_buy", "cart_leave", "quick_buy"})
+        data = get_journeys()
+        window = data["window"]
+        customers = data["customers"]
+        self.assertEqual(len(customers), 6)
+        for kind in ("compare_buy", "cart_leave", "quick_buy"):
+            self.assertEqual(sum(c["type"] == kind for c in customers), 2)
+        # 탭 번호는 들어온 순서
+        self.assertEqual([c["enter_second"] for c in customers], sorted(c["enter_second"] for c in customers))
         for summary in customers:
+            self.assertTrue(0 <= summary["enter_second"] <= summary["leave_second"] < window["minutes"] * 60)
             journey = get_journey(summary["id"])
             self.assertEqual(journey["version"], "product_purchase_v3")
             steps = journey["steps"]
@@ -100,6 +119,16 @@ class JourneyApiTest(unittest.TestCase):
                 self.assertEqual(summary["bought"], [])
             else:
                 self.assertTrue(summary["bought"])
+
+    def test_store_dashboard(self):
+        store = get_store()
+        minutes = store["window"]["minutes"]
+        for key in ("shoppers", "carting", "expected_next_10m", "actual_known_next_10m", "top_items"):
+            self.assertEqual(len(store[key]), minutes)
+        self.assertTrue(all(0 <= s["second"] < minutes * 60 for s in store["sales"]))
+        # 탭 손님이 산 상품도 가게 전체 판매에 들어 있다
+        bought = {item for c in get_journeys()["customers"] for item in c["bought"]}
+        self.assertTrue(bought <= {s["item_id"] for s in store["sales"]})
 
 
 if __name__ == "__main__":

@@ -1,21 +1,26 @@
-"""손님 한 명 따라가기 시뮬레이션 API.
+"""시뮬레이션 API: 같은 시간대 손님들의 쇼핑과 가게 전체 판매자 대시보드.
 
-고른 손님 기록(backend/app/data/journeys.json, scripts/build_journeys.py)을 한 행동씩 재생하며,
-그 순간 판매자 대시보드에 뜰 v3 예측을 계산한다. 모델은 이 손님들의 기록(test 기간)을
-학습·보정에 쓰지 않았다.
+test 기간의 붐비는 두 시간(backend/app/data/journeys.json의 window)을 같은 시계로 재생한다.
+모델(v3)은 이 기간 기록을 학습·보정에 쓰지 않았다.
 
-- /journeys: 손님 목록과 결과 요약 (산 상품, AI가 구매 직전에 1순위로 꼽았는지)
-- /journeys/{id}: 행동마다 머문 시간과, 그 행동 직후의 후보 상품별 구매 확률·순위·10분 안에 살
-  확률·주요 이유
+- /journeys: 시간 창과, 화면 탭에 띄울 손님 목록·결과 요약 (scripts/build_journeys.py로 고른 손님)
+- /journeys/store: 가게 전체 대시보드. 1분마다 쇼핑 중 손님, 다음 10분 예상 판매, 곧 팔릴 상품과
+  가정 재고·알림, 팔린 상품 (store_simulation.py)
+- /journeys/{id}: 손님 한 명의 행동마다 머문 시간과, 그 행동 직후 그 손님의 후보 상품별 구매 확률·순위·
+  10분 안에 살 확률·주요 이유
 
+시각은 모두 시간 창 시작부터의 초다. 손님의 예측은 이전 기록(history)까지 보고 계산한다.
 시뮬레이션 화면은 서비스 버전(current.json)과 관계없이 조회·장바구니 입력 모델 v3를 쓴다.
 """
 import json
+import math
 from functools import lru_cache
 
 from fastapi import APIRouter, HTTPException
 
 from .ml import PROJECT_ROOT
+from .replay_api import load_day
+from .store_simulation import window_store
 
 from horizon import load_rates, within_horizon  # noqa: E402  (ml/product_purchase)
 from predict_extended import FEATURE_LABELS, ExtendedPredictor  # noqa: E402
@@ -43,7 +48,9 @@ def reasons(candidate):
         {
             "feature": name,
             "label": FEATURE_LABELS.get(name, name),
-            "value": candidate["features"][name],
+            # 값이 없는 피처(담은 적 없는 상품의 "마지막으로 담은 뒤 경과 시간" 등)는 NaN이라
+            # JSON으로 보낼 수 없어 null로 바꾼다.
+            "value": None if math.isnan(candidate["features"][name]) else candidate["features"][name],
             "contribution": round(value, 4),
         }
         for name, value in contributions[:REASONS]
@@ -123,6 +130,8 @@ def load_journeys(path=JOURNEYS_PATH, modified=None):
     journeys = []
     for customer in data["customers"]:
         events = customer["events"]
+        # 예측은 이전 기록(시각이 음수)까지 보고, 화면에는 이번 방문만 보여준다.
+        everything = customer.get("history", []) + events
         steps = []
         for index, (second, kind, item) in enumerate(events):
             following = events[index + 1][0] if index + 1 < len(events) else None
@@ -132,17 +141,23 @@ def load_journeys(path=JOURNEYS_PATH, modified=None):
                 "item_id": item,
                 # 다음 행동까지 걸린 시간 (마지막 행동은 없음)
                 "dwell_seconds": None if following is None else round(following - second, 1),
-                "dashboard": dashboard_at(events, second, predictor, rates),
+                "dashboard": dashboard_at(everything, second, predictor, rates),
             })
         journeys.append({
             "id": customer["id"],
             "type": customer["type"],
             "label": customer["label"],
-            "started_at": customer["started_at"],
+            "returning": bool(customer.get("history")),
             "steps": steps,
             "outcomes": purchase_outcomes(events, steps),
         })
-    return {"source": data["source"], "version": predictor.version, "threshold": predictor.threshold, "journeys": journeys}
+    return {
+        "source": data["source"],
+        "window": data["window"],
+        "version": predictor.version,
+        "threshold": predictor.threshold,
+        "journeys": journeys,
+    }
 
 
 def journeys(path=JOURNEYS_PATH):
@@ -157,9 +172,10 @@ def summary(journey):
         "id": journey["id"],
         "type": journey["type"],
         "label": journey["label"],
-        "started_at": journey["started_at"],
+        "returning": journey["returning"],
         "steps": len(journey["steps"]),
-        "minutes": round(journey["steps"][-1]["second"] / 60, 1),
+        "enter_second": journey["steps"][0]["second"],
+        "leave_second": journey["steps"][-1]["second"],
         "bought": [o["item_id"] for o in outcomes],
         "ai_top1": sum(1 for o in outcomes if o["rank_before"] == 1),
     }
@@ -167,13 +183,26 @@ def summary(journey):
 
 @router.get("")
 def get_journeys():
-    """재생할 수 있는 손님 목록과 결과 요약."""
+    """시간 창과, 화면 탭에 띄울 손님 목록·결과 요약."""
     data = journeys()
     return {
         "version": data["version"],
         "source": data["source"],
+        "window": data["window"],
         "customers": [summary(j) for j in data["journeys"]],
-        "note": "학습에 쓰지 않은 2015년 8~9월 실제 고객 기록입니다. 상품은 번호뿐이라 화면의 상품 이미지는 임의로 붙였습니다.",
+        "note": "학습에 쓰지 않은 2015년 8월 실제 쇼핑몰 기록입니다. 상품은 번호뿐이라 화면의 상품 이미지는 임의로 붙였습니다.",
+    }
+
+
+@router.get("/store")
+def get_store():
+    """가게 전체 대시보드: 시간 창의 1분마다 쇼핑 중 손님, 다음 10분 예상 판매, 곧 팔릴 상품과 가정 재고·알림."""
+    window = journeys()["window"]
+    day = load_day(window["date"])
+    return {
+        "window": window,
+        **window_store(day, window["start_minute"], window["minutes"]),
+        "note": "예측은 이미 들어와서 보거나 담은 손님 기준이라, 아직 들어오지 않은 손님의 구매는 예상에 없어요.",
     }
 
 
@@ -184,4 +213,4 @@ def get_journey(journey_id: int):
     journey = next((j for j in data["journeys"] if j["id"] == journey_id), None)
     if journey is None:
         raise HTTPException(status_code=404, detail=f"{journey_id}번 손님이 없습니다.")
-    return {"version": data["version"], "threshold": data["threshold"], **journey}
+    return {"version": data["version"], "threshold": data["threshold"], "window": data["window"], **journey}
