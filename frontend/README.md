@@ -25,6 +25,7 @@ npm run dev
 | `/guess` | AI와 대결 | 실제 쇼핑 기록을 보고 산 상품을 맞히는 3라운드 게임 (사람 vs AI) |
 | `/peak` | 피크타임 시뮬레이션 | 선착순과 우선 처리를 나란히 재생, 장면 결과, 100개 시간대 전체 결과 |
 | `/admin` | 판매자 대시보드 | 쇼핑 중 고객의 단계별 인원, 상품별 예상 판매량, 확인해볼 점. 5초마다 갱신 |
+| `/simulation` | 판매 시뮬레이션 | 학습에 쓰지 않은 2015년 8월 실제 쇼핑몰의 붐비는 두 시간을 같은 시계로 재생. 왼쪽은 손님의 컴퓨터 화면(손님 1~6 탭, 마우스 커서가 보기·담기·결제), 오른쪽은 가게 전체를 보는 판매자 관리자 화면(쇼핑 중 손님, 10분 예상 판매, 곧 팔릴 상품과 가정 재고·알림, 방금 팔린 상품), 가운데 자막. 시작 화면에는 아직 카드가 없어 주소로 들어간다 |
 
 시작 화면, 피크타임, 판매자 대시보드, AI와 대결에서는 쇼핑몰 상단바를 숨깁니다.
 
@@ -46,10 +47,11 @@ src/
   styles.css              쇼핑 화면 공통 스타일과 색 변수 (:root)
   data/products.js        상품 48개 (6개 카테고리 × 8개)와 이미지 경로
   context/ShoppingContext 세션 번호, 조회 기록, 구매 상품, 구매 의도 단계 상태
-  api/                    백엔드 호출 (session.js, peak.js, guess.js)
+  api/                    백엔드 호출 (session.js, peak.js, guess.js, journeys.js)
   components/             상품 카드, 단계별 모달
   pages/                  시작, 상품 목록·상세, 결제, 결과, 판매자 대시보드
   peak/                   피크타임 시뮬레이션 (재생 계산, SVG 그래프, 화면)
+  simulation/             판매 시뮬레이션 (상품 이미지·문구 계산, 손님 모니터, 판매자 관리자 화면)
   guess/                  AI와 대결 (라운드, 결과, 최종 화면, 점수 계산)
 ```
 
@@ -59,6 +61,7 @@ src/
 
 - 쇼핑 화면, 판매자 대시보드, AI와 대결: `src/styles.css` 맨 위 `:root` 변수 (`--ink`, `--accent`, `--green` 등)
 - 피크타임 화면: `src/peak/peak.css` 맨 위 `.peak-page` 변수
+- 판매 시뮬레이션: `src/simulation/simulation.css` 맨 위 `.sim-page` 변수
 - SVG 그래프 색은 CSS 변수를 쓸 수 없어 `DashboardPage.jsx`의 `STAGES`, `PeakPage.jsx`의 `COLORS`에 따로 있습니다. 변수를 바꿀 때 같이 맞춥니다.
 - 화면 너비를 다 쓰는 페이지(피크타임, 판매자 대시보드)의 양옆 여백은 `--page-gutter` 하나로 맞춥니다.
 
