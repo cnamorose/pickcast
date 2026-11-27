@@ -1,0 +1,1435 @@
+/* 판매 시뮬레이션 화면 전용 스타일. 다른 화면과 섞이지 않게 sim- 접두사를 쓴다.
+   왼쪽 손님 화면은 모니터 안의 귀여운 쇼핑몰, 오른쪽 판매자 화면은 관리자 프로그램처럼 만든다.
+   색은 쇼핑 화면과 같은 팔레트(Rhythm 보라, Camouflage Green 초록, Eerie Black)를 쓴다. */
+.sim-page {
+  --sim-ink: #15191e;
+  --sim-dim: #5f646a;
+  --sim-line: #e4e7e0;
+  --sim-soft: #f5f5f3;
+  --sim-bg: #f6f5fb;
+  --sim-purple: #6f62b8;
+  --sim-purple-soft: #f1effa;
+  --sim-purple-line: #d6d2e8;
+  --sim-green: #6b9a4c;
+  --sim-green-soft: #edf2e8;
+  --sim-good: #556842;
+  --sim-red: #b2302f;
+  --sim-red-soft: #f8e9e8;
+  --sim-amber: #b7791f;
+  --sim-amber-soft: #fdf3e1;
+  --sim-pink: #ffd9e4;
+  --sim-admin-side: #1f2330;
+  min-height: 100vh;
+  background: var(--sim-bg);
+  color: var(--sim-ink);
+  /* 화면 너비를 다 쓰도록 양옆 여백을 좁게 둔다 */
+  padding: 12px 20px;
+}
+
+.sim-container {
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* 위쪽 */
+.sim-topbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 14px;
+  background: #fff;
+  border: 1px solid var(--sim-line);
+  border-radius: 16px;
+  padding: 8px 14px;
+}
+
+.sim-back {
+  color: var(--sim-dim);
+  text-decoration: none;
+  font-size: 18px;
+}
+
+.sim-title {
+  flex: 0 1 auto;
+  margin-right: 8px;
+}
+
+.sim-title h1 {
+  margin: 0;
+  font-size: 19px;
+  font-weight: 800;
+}
+
+.sim-title p {
+  margin: 2px 0 0;
+  color: var(--sim-dim);
+  font-size: 12px;
+}
+
+.sim-help {
+  border: 1px solid var(--sim-purple-line);
+  background: #fff;
+  color: var(--sim-purple);
+  border-radius: 999px;
+  padding: 6px 14px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.sim-play {
+  background: var(--sim-purple);
+  color: #fff;
+  border: none;
+  border-radius: 999px;
+  padding: 8px 20px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  min-width: 118px;
+}
+
+.sim-play:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.sim-speeds {
+  display: flex;
+  gap: 8px;
+}
+
+.sim-chip {
+  border: 1px solid var(--sim-purple-line);
+  background: #fff;
+  color: var(--sim-ink);
+  border-radius: 999px;
+  padding: 5px 12px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.sim-chip-on {
+  background: var(--sim-ink);
+  border-color: var(--sim-ink);
+  color: #fff;
+}
+
+.sim-slider {
+  flex: 1 1 160px;
+  accent-color: var(--sim-purple);
+}
+
+.sim-clock {
+  font-size: 20px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+/* 가운데 자막 */
+.sim-caption {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  background: #fff;
+  border: 1px solid var(--sim-line);
+  border-radius: 16px;
+  padding: 9px 18px;
+  gap: 14px;
+  animation: sim-fade-in 0.4s ease-out;
+}
+
+.sim-caption-key {
+  background: var(--sim-purple-soft);
+  border-color: var(--sim-purple-line);
+  animation: sim-fade-in 0.4s ease-out, sim-glow 1.6s ease-out;
+}
+
+.sim-caption-icon {
+  font-size: 26px;
+}
+
+.sim-caption strong {
+  display: block;
+  font-size: 16px;
+  margin-bottom: 2px;
+}
+
+.sim-caption span {
+  font-size: 14px;
+  color: var(--sim-dim);
+}
+
+.sim-caption em {
+  font-style: normal;
+}
+
+.sim-caption b {
+  color: var(--sim-purple);
+  font-size: 17px;
+}
+
+@keyframes sim-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes sim-glow {
+  0% {
+    box-shadow: 0 0 0 0 rgba(111, 98, 184, 0.45);
+  }
+  100% {
+    box-shadow: 0 0 0 14px rgba(111, 98, 184, 0);
+  }
+}
+
+.sim-split {
+  display: grid;
+  grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.3fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.sim-section-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 800;
+  background: #fff;
+  border: 1px solid var(--sim-line);
+  border-radius: 999px;
+  padding: 5px 14px;
+}
+
+.sim-section-badge-dark {
+  background: var(--sim-purple-soft);
+  border-color: var(--sim-purple-line);
+  color: var(--sim-purple);
+}
+
+/* ---------- 왼쪽: 손님 컴퓨터 화면 ---------- */
+.sim-customer {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.sim-customer-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.sim-toggle {
+  border: 1px solid var(--sim-line);
+  background: #fff;
+  color: var(--sim-dim);
+  border-radius: 999px;
+  padding: 6px 14px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.sim-toggle-on {
+  color: var(--sim-good);
+  border-color: #cfe0c2;
+  background: var(--sim-green-soft);
+}
+
+.sim-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.sim-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--sim-line);
+  background: #fff;
+  border-radius: 12px 12px 6px 6px;
+  padding: 6px 11px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.sim-tab small {
+  font-weight: 400;
+  color: var(--sim-dim);
+  font-size: 12px;
+}
+
+.sim-tab-on {
+  background: var(--sim-ink);
+  border-color: var(--sim-ink);
+  color: #fff;
+}
+
+.sim-tab-on small {
+  color: #cfd2d6;
+}
+
+.sim-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.sim-dot-live {
+  background: #3fbf6a;
+  box-shadow: 0 0 0 3px rgba(63, 191, 106, 0.2);
+}
+
+.sim-dot-wait {
+  background: #c9ccd1;
+}
+
+.sim-dot-left {
+  background: #8c919a;
+}
+
+/* 모니터 */
+.sim-monitor {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.sim-screen {
+  width: 100%;
+  background: #2a2d36;
+  border-radius: 18px 18px 0 0;
+  padding: 10px 10px 0;
+  box-shadow: 0 18px 40px rgba(31, 35, 48, 0.18);
+}
+
+.sim-monitor-chin {
+  width: 100%;
+  height: 16px;
+  background: #2a2d36;
+  border-radius: 0 0 18px 18px;
+  position: relative;
+}
+
+.sim-monitor-chin::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 5px;
+  width: 6px;
+  height: 6px;
+  margin-left: -3px;
+  border-radius: 50%;
+  background: #6f62b8;
+}
+
+.sim-monitor-neck {
+  width: 56px;
+  height: 14px;
+  background: linear-gradient(#c9ccd4, #b7bbc4);
+}
+
+.sim-monitor-foot {
+  width: 150px;
+  height: 9px;
+  border-radius: 999px;
+  background: #b7bbc4;
+}
+
+/* 모니터 안의 귀여운 쇼핑몰 */
+.sim-shop {
+  background: #fffdfb;
+  border-radius: 12px 12px 0 0;
+  overflow: hidden;
+  height: clamp(270px, 40vh, 400px);
+  display: flex;
+  flex-direction: column;
+}
+
+.sim-shop-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  background: linear-gradient(90deg, #fbe7ef, #ece8fb);
+  font-size: 12px;
+}
+
+.sim-shop-logo {
+  font-weight: 800;
+  color: #6f62b8;
+  font-size: 14px;
+}
+
+.sim-shop-search {
+  flex: 1;
+  background: #fff;
+  border-radius: 999px;
+  padding: 5px 12px;
+  color: #a3a7ab;
+}
+
+.sim-shop-cart {
+  position: relative;
+  font-size: 18px;
+}
+
+.sim-shop-cart b {
+  position: absolute;
+  top: -6px;
+  right: -9px;
+  min-width: 17px;
+  height: 17px;
+  border-radius: 999px;
+  background: #e0577d;
+  color: #fff;
+  font-size: 11px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: sim-pop 0.5s ease-out;
+}
+
+@keyframes sim-pop {
+  0% {
+    transform: scale(0.4);
+  }
+  60% {
+    transform: scale(1.3);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.sim-shop-body {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  padding: 14px 16px;
+  animation: sim-fade-in 0.35s ease-out;
+}
+
+.sim-product {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 18px;
+  align-items: center;
+}
+
+.sim-product-photo {
+  background: var(--sim-pink);
+  border-radius: 18px;
+  padding: 8px;
+}
+
+.sim-product-photo img,
+.sim-paid img {
+  width: 100%;
+  max-height: calc(40vh - 120px);
+  aspect-ratio: 1;
+  object-fit: cover;
+  border-radius: 14px;
+  display: block;
+}
+
+.sim-product-cat {
+  font-size: 12px;
+  color: #e0577d;
+  font-weight: 700;
+}
+
+.sim-product-info h3 {
+  margin: 4px 0 6px;
+  font-size: 19px;
+}
+
+.sim-product-price {
+  margin: 0 0 16px;
+  font-weight: 800;
+  font-size: 16px;
+}
+
+.sim-btn {
+  display: block;
+  text-align: center;
+  border-radius: 14px;
+  padding: 10px 0;
+  font-size: 14px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.sim-btn-cart {
+  background: #fff;
+  border: 2px solid #f2b6c8;
+  color: #c7466d;
+}
+
+.sim-btn-buy {
+  background: #6f62b8;
+  color: #fff;
+}
+
+.sim-btn-pressed {
+  background: #e0577d;
+  border-color: #e0577d;
+  color: #fff;
+  animation: sim-press 0.7s ease-out 0.6s both;
+}
+
+@keyframes sim-press {
+  0% {
+    transform: scale(1);
+  }
+  35% {
+    transform: scale(0.9);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.sim-paid {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+}
+
+.sim-paid img {
+  width: 130px;
+}
+
+.sim-paid strong {
+  font-size: 22px;
+  color: #c7466d;
+}
+
+/* 마우스 커서: 행동마다 그 자리로 움직이고 누른다 */
+.sim-cursor {
+  position: absolute;
+  width: 26px;
+  height: 26px;
+  pointer-events: none;
+  animation: sim-cursor-move 0.6s ease-out both;
+}
+
+.sim-cursor-view {
+  left: 26%;
+  top: 46%;
+}
+
+.sim-cursor-addtocart {
+  left: 76%;
+  top: 62%;
+}
+
+.sim-cursor-transaction {
+  left: 56%;
+  top: 74%;
+}
+
+@keyframes sim-cursor-move {
+  from {
+    transform: translate(60px, 50px);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+.sim-click {
+  position: absolute;
+  left: -8px;
+  top: -8px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2px solid #e0577d;
+  opacity: 0;
+  animation: sim-click 0.6s ease-out 0.6s;
+}
+
+@keyframes sim-click {
+  0% {
+    transform: scale(0.3);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(2);
+    opacity: 0;
+  }
+}
+
+.sim-empty-screen {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 14px 18px;
+  text-align: center;
+  overflow: hidden;
+  color: var(--sim-dim);
+  font-size: 14px;
+}
+
+.sim-empty-screen strong {
+  color: var(--sim-ink);
+  font-size: 17px;
+}
+
+.sim-empty-emoji {
+  font-size: 32px;
+}
+
+.sim-left-type {
+  background: var(--sim-soft);
+  border-radius: 999px;
+  padding: 3px 12px;
+  font-size: 12px;
+}
+
+.sim-outcome {
+  width: 100%;
+  border-radius: 12px;
+  padding: 8px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  text-align: left;
+  line-height: 1.45;
+  font-size: 13px;
+  animation: sim-fade-in 0.5s ease-out;
+}
+
+.sim-outcome b {
+  font-size: 15px;
+}
+
+.sim-outcome-hit {
+  background: var(--sim-green-soft);
+  color: var(--sim-good);
+}
+
+.sim-outcome-miss {
+  background: var(--sim-red-soft);
+  color: var(--sim-red);
+}
+
+.sim-outcome-neutral {
+  background: var(--sim-soft);
+  color: var(--sim-dim);
+}
+
+.sim-dwell {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+  color: var(--sim-dim);
+}
+
+.sim-dwell-bar {
+  flex: 1;
+  height: 6px;
+  background: #e6e4ef;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.sim-dwell-bar i {
+  display: block;
+  height: 100%;
+  background: var(--sim-purple);
+}
+
+.sim-path {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.sim-path > span {
+  flex: 0 0 auto;
+  font-size: 12px;
+  color: var(--sim-dim);
+}
+
+.sim-path ol {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.sim-path li {
+  position: relative;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  border: 2px solid transparent;
+  background: #fff;
+}
+
+.sim-path-done {
+  opacity: 0.6;
+}
+
+.sim-path li.sim-path-now {
+  border-color: var(--sim-purple);
+}
+
+.sim-path img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+.sim-path small {
+  position: absolute;
+  right: -7px;
+  bottom: -7px;
+  font-size: 12px;
+}
+
+/* ---------- 오른쪽: 판매자 관리자 화면 ---------- */
+.sim-admin {
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr);
+  background: #fff;
+  border: 1px solid var(--sim-line);
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 18px 40px rgba(31, 35, 48, 0.08);
+  min-width: 0;
+}
+
+.sim-admin-side {
+  background: var(--sim-admin-side);
+  color: #c9ccd6;
+  padding: 14px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.sim-admin-brand b {
+  display: block;
+  color: #fff;
+  font-size: 14px;
+}
+
+.sim-admin-brand span {
+  font-size: 11px;
+  color: #9aa0ad;
+}
+
+.sim-admin-side nav {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sim-admin-menu {
+  font-size: 12px;
+  padding: 7px 8px;
+  border-radius: 10px;
+}
+
+.sim-admin-menu-on {
+  background: #353a4b;
+  color: #fff;
+  font-weight: 700;
+}
+
+.sim-admin-model {
+  margin-top: auto;
+  font-size: 11px;
+  color: #8a90a0;
+}
+
+.sim-admin-main {
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  min-width: 0;
+  background: #fafbfc;
+}
+
+.sim-admin-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.sim-admin-top h2 {
+  margin: 8px 0 0;
+  font-size: 19px;
+}
+
+.sim-admin-clock {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 18px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.sim-admin-clock small {
+  font-size: 11px;
+  color: var(--sim-dim);
+  font-weight: 400;
+}
+
+.sim-live {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--sim-red);
+  animation: sim-blink 1.4s infinite;
+}
+
+@keyframes sim-blink {
+  50% {
+    opacity: 0.25;
+  }
+}
+
+.sim-kpis {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.sim-kpi {
+  background: #fff;
+  border: 1px solid var(--sim-line);
+  border-radius: 12px;
+  padding: 7px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sim-kpi span {
+  font-size: 12px;
+  color: var(--sim-dim);
+}
+
+.sim-kpi strong {
+  font-size: 19px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.sim-kpi-accent {
+  background: var(--sim-purple-soft);
+  border-color: var(--sim-purple-line);
+}
+
+.sim-kpi-accent strong {
+  color: var(--sim-purple);
+}
+
+.sim-alert {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-radius: 12px;
+  padding: 6px 12px;
+  font-size: 13px;
+  min-height: 36px;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.sim-alert span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sim-alert em {
+  font-style: normal;
+  opacity: 0.75;
+}
+
+.sim-alert-ok {
+  background: var(--sim-green-soft);
+  color: var(--sim-good);
+}
+
+.sim-alert img {
+  width: 24px;
+  height: 24px;
+  border-radius: 8px;
+  object-fit: cover;
+}
+
+.sim-alert-refill {
+  background: var(--sim-amber-soft);
+  color: #7a4f0e;
+}
+
+.sim-alert-soldout {
+  background: var(--sim-red-soft);
+  color: var(--sim-red);
+}
+
+.sim-admin-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  gap: 9px;
+}
+
+.sim-side-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  min-width: 0;
+}
+
+.sim-card {
+  background: #fff;
+  border: 1px solid var(--sim-line);
+  border-radius: 12px;
+  padding: 9px 12px;
+  min-width: 0;
+}
+
+.sim-card h3 {
+  margin: 0 0 6px;
+  font-size: 13px;
+}
+
+.sim-card h3 small {
+  font-weight: 400;
+  color: var(--sim-dim);
+  margin-left: 6px;
+  font-size: 12px;
+}
+
+.sim-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
+.sim-table th {
+  text-align: left;
+  color: var(--sim-dim);
+  font-weight: 600;
+  font-size: 12px;
+  padding: 4px 6px 8px;
+  border-bottom: 1px solid var(--sim-line);
+}
+
+.sim-table td {
+  padding: 4px 6px;
+  border-bottom: 1px solid #f0f1ed;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+.sim-table-product {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  white-space: normal;
+}
+
+.sim-table-product img {
+  width: 26px;
+  height: 26px;
+  border-radius: 7px;
+  object-fit: cover;
+}
+
+.sim-row-watch td {
+  background: var(--sim-purple-soft);
+}
+
+.sim-row-sold td {
+  background: var(--sim-green-soft);
+}
+
+.sim-tag {
+  font-style: normal;
+  font-size: 11px;
+  font-weight: 700;
+  border-radius: 999px;
+  padding: 1px 7px;
+  margin-left: 6px;
+  white-space: nowrap;
+}
+
+.sim-tag-watch {
+  background: var(--sim-purple);
+  color: #fff;
+}
+
+.sim-tag-sold {
+  background: var(--sim-green);
+  color: #fff;
+}
+
+.sim-bar {
+  display: inline-block;
+  width: 54px;
+  height: 6px;
+  background: var(--sim-soft);
+  border-radius: 3px;
+  margin-right: 6px;
+  vertical-align: middle;
+  overflow: hidden;
+}
+
+.sim-bar i {
+  display: block;
+  height: 100%;
+  background: var(--sim-purple);
+}
+
+.sim-status {
+  font-size: 11px;
+  font-weight: 700;
+  border-radius: 999px;
+  padding: 2px 8px;
+}
+
+.sim-status-ok {
+  background: var(--sim-soft);
+  color: var(--sim-dim);
+}
+
+.sim-status-refill {
+  background: var(--sim-amber-soft);
+  color: var(--sim-amber);
+}
+
+.sim-status-soldout {
+  background: var(--sim-red-soft);
+  color: var(--sim-red);
+}
+
+.sim-chart {
+  margin: 0;
+}
+
+.sim-chart svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.sim-grid {
+  stroke: #eceee8;
+}
+
+.sim-axis {
+  fill: var(--sim-dim);
+  font-size: 9px;
+}
+
+.sim-now {
+  stroke: var(--sim-ink);
+  stroke-dasharray: 2 3;
+}
+
+.sim-line-expected,
+.sim-line-actual {
+  fill: none;
+  stroke-width: 2;
+}
+
+.sim-line-expected {
+  stroke: var(--sim-purple);
+}
+
+.sim-line-actual {
+  stroke: var(--sim-green);
+}
+
+.sim-chart figcaption {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  font-size: 11px;
+  color: var(--sim-dim);
+  margin-top: 4px;
+}
+
+.sim-chart figcaption i {
+  display: inline-block;
+  width: 10px;
+  height: 3px;
+  margin-right: 4px;
+  vertical-align: middle;
+}
+
+.sim-key-expected {
+  background: var(--sim-purple);
+}
+
+.sim-key-actual {
+  background: var(--sim-green);
+}
+
+.sim-sales,
+.sim-watch {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.sim-sales li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  animation: sim-fade-in 0.4s ease-out;
+}
+
+.sim-sales img,
+.sim-watch img {
+  width: 26px;
+  height: 26px;
+  border-radius: 7px;
+  object-fit: cover;
+}
+
+.sim-sales small {
+  display: block;
+  color: var(--sim-dim);
+  font-size: 11px;
+}
+
+/* 지금 보는 손님의 관심 상품: 한 줄에 카드 3개 */
+.sim-watch {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.sim-watch li {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 12px;
+  background: var(--sim-soft);
+  border-radius: 10px;
+  padding: 6px 8px;
+  min-width: 0;
+}
+
+.sim-watch li.sim-watch-yes {
+  background: var(--sim-purple-soft);
+}
+
+.sim-watch-name {
+  min-width: 0;
+}
+
+.sim-watch-name b {
+  display: block;
+  color: var(--sim-ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.sim-watch-yes .sim-watch-name b {
+  color: var(--sim-purple);
+}
+
+.sim-watch-name small {
+  display: block;
+  color: var(--sim-dim);
+  font-size: 11px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sim-verdict {
+  font-size: 11px;
+  font-weight: 700;
+  border-radius: 999px;
+  padding: 3px 10px;
+  border: 1px solid var(--sim-line);
+  color: var(--sim-dim);
+  background: #fff;
+}
+
+.sim-verdict-yes {
+  background: var(--sim-purple);
+  border-color: var(--sim-purple);
+  color: #fff;
+}
+
+.sim-muted {
+  color: var(--sim-dim);
+  font-size: 13px;
+  margin: 0;
+}
+
+.sim-footnote {
+  margin: 0;
+  font-size: 11px;
+  color: var(--sim-dim);
+  line-height: 1.5;
+}
+
+/* 큰 화면에서는 스크롤 없이 화면 높이를 꽉 채운다.
+   위 줄·자막·안내 문구를 뺀 나머지 높이를 손님 모니터와 판매자 화면이 나눠 쓰고, 안의 칸들도 늘어난다. */
+@media (min-width: 1180px) and (min-height: 760px) {
+  .sim-page {
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .sim-container {
+    flex: 1;
+    min-height: 0;
+    width: 100%;
+  }
+
+  .sim-split {
+    flex: 1;
+    min-height: 0;
+    align-items: stretch;
+  }
+
+  /* 왼쪽: 모니터는 실제 모니터처럼 16:10 비율로 고정한다.
+     칸 너비만큼 커지되, 남은 높이(화면 높이 − 위 줄·자막·탭·받침대·아래 줄)를 넘지 않게 너비를 제한한다. */
+  .sim-customer {
+    min-height: 0;
+  }
+
+  .sim-monitor {
+    width: 100%;
+    max-width: calc((100vh - 400px) * 1.6);
+    margin: 0 auto;
+  }
+
+  .sim-screen {
+    aspect-ratio: 16 / 10;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .sim-shop {
+    flex: 1;
+    height: auto;
+    min-height: 0;
+  }
+
+  .sim-shop-body {
+    display: flex;
+  }
+
+  .sim-product {
+    flex: 1;
+    height: 100%;
+  }
+
+  .sim-product-photo {
+    height: 100%;
+    max-height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+  }
+
+  .sim-product-photo img {
+    width: auto;
+    height: 100%;
+    max-width: 100%;
+    max-height: none;
+  }
+
+  .sim-paid {
+    flex: 1;
+    justify-content: center;
+  }
+
+  .sim-paid img {
+    width: auto;
+    height: min(45%, 260px);
+  }
+
+  .sim-shop-body .sim-product-info h3 {
+    font-size: clamp(19px, 1.5vw, 26px);
+  }
+
+  /* 오른쪽: 관리자 화면도 같은 높이, 가운데 칸들이 남은 높이를 채운다 */
+  .sim-admin {
+    height: 100%;
+    min-height: 0;
+  }
+
+  .sim-admin-main {
+    min-height: 0;
+  }
+
+  .sim-admin-grid {
+    flex: 1;
+    min-height: 0;
+  }
+
+  .sim-admin-grid > .sim-card,
+  .sim-side-cards > .sim-card {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+
+  .sim-admin-grid > .sim-card .sim-table {
+    flex: 1;
+    height: 100%;
+  }
+
+  .sim-side-cards > .sim-card {
+    flex: 1;
+  }
+
+  .sim-chart {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+}
+
+.sim-message {
+  color: var(--sim-dim);
+  padding: 48px 0;
+  text-align: center;
+}
+
+/* 처음 설명 화면 */
+.sim-guide-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(21, 25, 30, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  z-index: 50;
+}
+
+.sim-guide {
+  background: #fff;
+  border-radius: 24px;
+  padding: 32px 36px;
+  max-width: 620px;
+  width: 100%;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.18);
+  animation: sim-fade-in 0.35s ease-out;
+}
+
+.sim-guide h2 {
+  margin: 0 0 22px;
+  font-size: 22px;
+}
+
+.sim-guide ol {
+  list-style: none;
+  margin: 0 0 28px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.sim-guide li {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.sim-guide li b {
+  flex: 0 0 auto;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--sim-purple);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sim-guide strong {
+  display: block;
+  font-size: 16px;
+  margin-bottom: 4px;
+}
+
+.sim-guide li span {
+  font-size: 14px;
+  color: var(--sim-dim);
+  line-height: 1.5;
+}
+
+.sim-guide-start {
+  width: 100%;
+}
+
+@media (max-width: 1180px) {
+  .sim-split {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 720px) {
+  .sim-admin {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .sim-admin-side {
+    display: none;
+  }
+
+  .sim-kpis,
+  .sim-admin-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .sim-product {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
