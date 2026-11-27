@@ -18,6 +18,7 @@ RetailRocket의 조회 행동을 바탕으로 상품별 구매 예측 모델을 
 - 구매 맞히기 게임(AI와 대결)의 문제를 test 사용자 기록으로 만들었습니다(아래 10절).
 - [시간 분할 검증과 장바구니·상품 통계 피처 실험](../docs/ml/time-split-results.md) — 5~6월 학습, 7월 검증, 8~9월 test로 나눠 지금 모델을 다시 확인하고, 장바구니·상품 통계 피처를 넣은 판매자용 모델을 실험했습니다(아래 11절).
 - 피처 실험에서 고른 모델을 **v3**(`models/product_purchase_v3/`, 조회·장바구니 입력)로 등록했습니다. 추론은 `product_purchase/predict_extended.py`로 합니다. 백엔드가 장바구니 기록을 받기 전까지 `current.json`은 v2를 유지합니다.
+- [10분 예상 판매량과 재생 파일](../docs/ml/horizon-replay.md) — v3 확률을 "앞으로 10분 안에 살 확률"로 바꾸는 비율을 valid로 만들고 test로 확인했습니다. 시뮬레이션 화면이 쓸 하루치 재생 파일(`results/replay/`)을 만들었습니다(아래 12절).
 
 ## 본 모델의 목표
 
@@ -300,10 +301,32 @@ $env:PRODUCT_PURCHASE_DIR = "product_purchase_time"
 .\ml\.venv\Scripts\python.exe ml/product_purchase/predict_extended.py log.csv v3   # timestamp, event, itemid 컬럼
 ```
 
-### 12. 테스트
+### 12. 10분 예상 판매량과 시뮬레이션 재생 파일
+
+v3 확률은 "이후 언젠가 살 확률"이라, 시뮬레이션·게임이 쓸 "앞으로 10분 안에 살 확률"로 바꿉니다. valid를 10분 간격으로 재생해 (담았는지, 마지막 행동 뒤 지난 시간)별로 다음 10분 판매 수 ÷ 모델 확률 합을 구하고, 10분 확률은 min(1, 확률 × 비율)입니다. 이미 들어와서 보거나 담은 고객만 예측합니다. 방법과 결과는 [docs/ml/horizon-replay.md](../docs/ml/horizon-replay.md)에 정리했습니다.
+
+```powershell
+$env:PRODUCT_PURCHASE_DIR = "product_purchase_time"
+
+.\ml\.venv\Scripts\python.exe ml/product_purchase/fit_horizon_rates.py --version v3
+.\ml\.venv\Scripts\python.exe ml/product_purchase/evaluate_horizon.py --version v3 --split valid
+.\ml\.venv\Scripts\python.exe ml/product_purchase/evaluate_horizon.py --version v3 --split test
+.\ml\.venv\Scripts\python.exe ml/product_purchase/build_replay.py --version v3 --date 2015-08-17 --date 2015-08-07
+```
+
+| 스크립트 | 하는 일 | 결과 |
+| --- | --- | --- |
+| `fit_horizon_rates.py` | valid로 10분 판매 비율 | `models/product_purchase_v3/horizon_rates.json` |
+| `evaluate_horizon.py` | 10분 간격 예상 판매와 실제 비교 (test는 결과가 있으면 실행되지 않음) | `data/product_purchase_time/horizon/{valid,test}_metrics.json` |
+| `build_replay.py` | test 하루를 1분 간격으로 계산한 재생 파일 | `results/replay/날짜.json` |
+
+- 계산은 `horizon.py`(비율과 10분 확률), 행 준비와 일정 간격 재생은 `horizon_rows.py`에 있습니다.
+- 재생 파일에는 1분마다 쇼핑 중 고객 수, 다음 10분 예상 판매, 예상 판매 상위 10개 상품과 그날의 조회·담기·구매 기록, 구매마다 모델이 미리 꼽았는지가 들어 있습니다. test 사용자만 넣었고, 고객 번호는 날짜마다 새로 매겼습니다.
+
+### 13. 테스트
 
 ```powershell
 .\ml\.venv\Scripts\python.exe -m unittest discover -s ml/product_purchase/tests -t ml/product_purchase -v
 ```
 
-`test_features.py`는 손으로 만든 조회 기록으로 피처 정의를 확인합니다. `test_predict.py`는 Git에 포함된 확정 모델로 추론 결과의 형식과 일관성을 확인합니다. `test_release.py`는 임시 폴더로 버전 반영·되돌리기를 확인하고, `current.json`이 쓸 수 있는 버전을 가리키는지 확인합니다. `test_stage.py`의 시나리오 테스트는 `ml/models/`에 등록된 모든 버전으로 단계 판단을 확인하므로, 새 버전을 등록하면 단계 기준값이 그 버전에서도 통하는지 바로 드러납니다. `test_recalibrate.py`는 재보정의 등록 기준을 확인합니다. `test_experience.py`는 체험 기록 정제·학습 행·스위치를, `test_pipeline.py`는 임시 폴더와 가짜 체험 기록으로 파이프라인의 단계별 멈춤·등록·반영을 확인합니다. `test_peak_simulation.py`는 손으로 만든 요청으로 처리 순서, 이탈, 에이징을 확인합니다. `test_guess_game.py`는 손으로 만든 조회 기록으로 게임 문제 기준과 난이도를 확인합니다. `test_features_extended.py`는 확장 피처(조회만 있을 때 기존 피처와 같은 값인지, 장바구니·방문·과거 구매)와 상품 통계에서 자기 묶음을 빼는지를 확인합니다. `test_predict_extended.py`는 v3 예측 모듈의 동작을 확인하고, 확장 학습 데이터가 있으면 test 사용자 30명의 피처를 원본 기록에서 다시 계산해 대조합니다. 단계 판단 시나리오(`test_stage.py`)는 조회만 쓰는 버전에서만 확인합니다.
+`test_features.py`는 손으로 만든 조회 기록으로 피처 정의를 확인합니다. `test_predict.py`는 Git에 포함된 확정 모델로 추론 결과의 형식과 일관성을 확인합니다. `test_release.py`는 임시 폴더로 버전 반영·되돌리기를 확인하고, `current.json`이 쓸 수 있는 버전을 가리키는지 확인합니다. `test_stage.py`의 시나리오 테스트는 `ml/models/`에 등록된 모든 버전으로 단계 판단을 확인하므로, 새 버전을 등록하면 단계 기준값이 그 버전에서도 통하는지 바로 드러납니다. `test_recalibrate.py`는 재보정의 등록 기준을 확인합니다. `test_experience.py`는 체험 기록 정제·학습 행·스위치를, `test_pipeline.py`는 임시 폴더와 가짜 체험 기록으로 파이프라인의 단계별 멈춤·등록·반영을 확인합니다. `test_peak_simulation.py`는 손으로 만든 요청으로 처리 순서, 이탈, 에이징을 확인합니다. `test_guess_game.py`는 손으로 만든 조회 기록으로 게임 문제 기준과 난이도를 확인합니다. `test_features_extended.py`는 확장 피처(조회만 있을 때 기존 피처와 같은 값인지, 장바구니·방문·과거 구매)와 상품 통계에서 자기 묶음을 빼는지를 확인합니다. `test_predict_extended.py`는 v3 예측 모듈의 동작을 확인하고, 확장 학습 데이터가 있으면 test 사용자 30명의 피처를 원본 기록에서 다시 계산해 대조합니다. 단계 판단 시나리오(`test_stage.py`)는 조회만 쓰는 버전에서만 확인합니다. `test_horizon.py`는 10분 확률 계산과 비율 세기를 손으로 만든 값으로 확인하고, `test_build_replay.py`는 재생 파일의 쇼핑 중 고객 수, 1분 예상 판매, 구매 직전 순위를 손으로 만든 기록으로 확인합니다.
