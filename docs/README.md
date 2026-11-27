@@ -22,6 +22,7 @@
 | [구매 의도 단계 판단 검증](ml/stage-validation.md) | 단계 판단 기준값과 단계별 실제 구매율 (valid) |
 | [확장 기능 test 평가](ml/extension-test-results.md) | 단계 판단, 단순 규칙 대비 정답률, 대시보드 예상 범위 (test) |
 | [피크타임 우선 처리 시뮬레이션](ml/peak-simulation.md) | 선착순·확률 우선·에이징 비교, α 선택 |
+| [10분 예상 판매량과 재생 파일](ml/horizon-replay.md) | v3 확률을 10분 안에 살 확률로 바꾸는 방법과 test 확인, 시뮬레이션 재생 파일 |
 
 ### 초기 실험 (본 모델 성능으로 쓰지 않음)
 
